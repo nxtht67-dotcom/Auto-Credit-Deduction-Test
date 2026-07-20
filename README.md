@@ -1,216 +1,245 @@
-# Credit Deduction QA Automation
+<div align="center">
 
-Automated Playwright framework for verifying whether premium tools correctly deduct user credits after performing an action (OCR, PDF conversion, AI tools, etc.).
+# 🚀 Credit Deduction QA Automation
 
----
+### Automated Playwright framework for validating premium credit deduction across multiple SaaS tools.
 
-# Features
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-Automation-2EAD33?logo=playwright&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![QA](https://img.shields.io/badge/Purpose-QA%20Automation-blue)
 
-- Automatically checks credit balance before and after each test.
-- Supports multiple websites from a single configuration.
-- Works with both Live and Staging environments.
-- Supports:
-  - Image uploads
-  - PDF uploads
-  - Text input tools
-- Detects successful conversions before checking credits.
-- Validates exact deduction amount where supported.
-- Produces clear PASS / FAIL output.
+</div>
 
 ---
 
-# Project Structure
+# 📚 Table of Contents
 
-```
+- [Overview](#-overview)
+- [Features](#-features)
+- [Project Structure](#-project-structure)
+- [Requirements](#-requirements)
+- [Quick Start](#-quick-start)
+- [How It Works](#-how-it-works)
+- [Configuration Files](#-configuration-files)
+- [Adding a New Tool](#-adding-a-new-tool)
+- [Example Output](#-example-output)
+- [Troubleshooting](#-troubleshooting)
+- [Best Practices](#-best-practices)
+
+---
+
+# 🎯 Overview
+
+This project automates **credit deduction verification** for premium SaaS tools.
+
+Instead of manually checking credits after every conversion, the script automatically:
+
+- Reads the user's current credits
+- Performs the conversion
+- Waits until processing completes
+- Reads credits again
+- Reports whether the expected deduction occurred
+
+Supported tools include:
+
+- 🖼️ Image to Text
+- 📄 PDF Tools
+- 🌍 OCR Tools
+- 🤖 AI Writing Tools
+- ✨ Paraphrasing
+- 📝 Grammar Tools
+- and many more...
+
+---
+
+# ✨ Features
+
+| Feature | Description |
+|----------|-------------|
+| ✅ Automatic Credit Verification | Checks credits before and after every test |
+| 🌐 Multi-site Support | Test multiple websites from one framework |
+| ⚙️ Configuration Driven | Add tools without changing Python code |
+| 📂 Multiple File Types | Images, PDFs, DOCX, PPTX, Text |
+| 📊 Quantity Validation | Verifies exact deduction where supported |
+| 🎨 Colorized Output | Easy-to-read PASS / FAIL console logs |
+| 🔍 Smart Waiting | Waits for real completion instead of fixed delays |
+
+---
+
+# 📁 Project Structure
+
+```text
 .
-├── credits_deduction.py          # Main automation script
-├── credits_deduction_save.py     # Backup/alternate version
-├── site_mappings.json            # Tool URLs and site information
-├── resolved_tool_urls.json       # Complete tool configuration
-├── credits_overview_data.txt     # Expected credit costs
-├── README.md
+├── credits_deduction.py          ⭐ Main Script
+├── credits_deduction_save.py     Backup Version
+├── resolved_tool_urls.json       Tool Configuration
+├── site_mappings.json            Website Mapping
+├── credits_overview_data.txt     Expected Credit Costs
+├── debug_dumps/                  Screenshots & HTML on failures
+└── README.md
 ```
 
 ---
 
-# Requirements
+# ⚙️ Requirements
 
-- Python 3.11+
+## Software
+
+- Python **3.11+**
 - Google Chrome
 - Playwright
 
-Install dependencies:
+---
+
+## Install Dependencies
 
 ```bash
 pip install playwright
+```
+
+```bash
 playwright install
 ```
 
 ---
 
-# Before Running
+# 🚀 Quick Start
 
-## 1. Start Chrome with Remote Debugging
+## Step 1 — Launch Chrome
 
 Close every Chrome window first.
-
-Windows:
 
 ```cmd
 chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\ChromeAutomation"
 ```
 
-or
+---
 
-```cmd
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\ChromeAutomation"
-```
+## Step 2 — Login
+
+Using the opened browser:
+
+✅ Login to Premium Account
+
+✅ Keep Chrome open
+
+❌ Do NOT close it
 
 ---
 
-## 2. Login
+## Step 3 — Configure Test Data
 
-Using the opened Chrome window:
-
-- Login to the website(s)
-- Make sure the account has premium access
-- Leave Chrome open
-
-The script connects to this browser instead of opening a new one.
-
----
-
-## 3. Test Data
-
-Update the test data folder inside the script if necessary.
-
-Example:
+Inside **credits_deduction.py**
 
 ```python
-TEST_DATA_DIR = r"C:\Users\YourName\Desktop\Test Data"
+TEST_DATA_DIR = r"C:\Users\<YourName>\Desktop\Test Data"
 ```
 
-The folder should contain files required by different tools such as:
+Example folder:
 
-- Images
-- PDFs
-- Word documents
-- PPT files
+```text
+Test Data
+│
+├── sample.jpg
+├── sample.pdf
+├── sample.docx
+├── sample.pptx
+└── sample.txt
+```
 
 ---
 
-# Running
-
-Run:
+## Step 4 — Run
 
 ```bash
 python credits_deduction.py
 ```
 
-The script will:
+---
 
-1. Connect to Chrome
-2. Open each configured tool
-3. Read current credits
-4. Perform the conversion
-5. Wait until processing finishes
-6. Read credits again
-7. Report PASS or FAIL
+# 🔄 How It Works
+
+```text
+┌────────────────────┐
+│ Read Current Credit│
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Open Target Tool   │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Upload/Test Input  │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Run Conversion     │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Wait for Result    │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Read Credits Again │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Compare Values     │
+└─────────┬──────────┘
+          │
+      PASS / FAIL
+```
 
 ---
 
-# Configuration Files
+# 🗂 Configuration Files
 
-## resolved_tool_urls.json
+## 📄 resolved_tool_urls.json
 
 Contains:
 
-- Tool URL
+- Tool URLs
 - Expected credit cost
 - File type
 - Selectors
-- Premium status
+- Premium flag
 - Pre-actions
-
-Add new tools here.
+- Skip rules
 
 ---
 
-## site_mappings.json
+## 🌐 site_mappings.json
 
 Contains:
 
-- Website URLs
-- Pricing page
-- Tool paths
-- Site-specific notes
+- Base URLs
+- Pricing Pages
+- Tool Paths
+- Website Notes
 
 ---
 
-## credits_overview_data.txt
+## 💳 credits_overview_data.txt
 
-Reference file containing expected credit usage collected from pricing pages.
+Reference list of expected premium credit costs.
 
-Update this whenever pricing changes.
-
----
-
-# Adding a New Tool
-
-1. Add the tool to `resolved_tool_urls.json`.
-2. Add its URL to `site_mappings.json`.
-3. Update `credits_overview_data.txt` with expected credits.
-4. Run the script.
-
-No code changes are required unless the tool has unique behavior.
+Update whenever pricing changes.
 
 ---
 
-# Console Output
+# ➕ Adding a New Tool
 
-Example:
+### 1️⃣ Add Tool Information
 
-```
-Checking Image to Text...
-
-Credits Before: 150
-Credits After : 149
-
-✓ PASS
-```
-
-or
-
-```
-Checking PDF to Excel...
-
-Credits Before: 100
-Credits After : 100
-
-✗ FAIL
-```
-
----
-
-# Troubleshooting
-
-## Browser won't connect
-
-- Close all Chrome windows.
-- Restart Chrome using the remote debugging command.
-- Login again.
-
----
-
-## Tool not detected
-
-Usually caused by:
-
-- Changed CSS selectors
-- UI redesign
-- New button names
-
-Update the selectors inside:
+Update:
 
 ```
 resolved_tool_urls.json
@@ -218,28 +247,117 @@ resolved_tool_urls.json
 
 ---
 
-## Credits don't update
+### 2️⃣ Add Site Mapping
 
-Possible reasons:
+Update:
 
-- Site caching
-- Account page changed
-- Premium subscription expired
-- Tool no longer deducts credits
-
-Verify manually before updating the configuration.
+```
+site_mappings.json
+```
 
 ---
 
-# Notes
+### 3️⃣ Update Credit Cost
 
-- Keep the Chrome window open while the script is running.
-- Do not interact with the browser during execution.
-- If pricing changes, update the configuration files before running new tests.
-- The framework is configuration-driven, so most new tools can be added without modifying the Python script.
+Update:
+
+```
+credits_overview_data.txt
+```
 
 ---
 
-# Maintainers
+### 4️⃣ Run the Script
 
-QA Automation Team
+```bash
+python credits_deduction.py
+```
+
+> 💡 Most tools can be added without changing any Python code.
+
+---
+
+# 📈 Example Output
+
+## ✅ PASS
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Image to Text
+
+Credits Before : 150
+Credits After  : 149
+
+✓ PASS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+## ❌ FAIL
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PDF to Excel
+
+Credits Before : 100
+Credits After  : 100
+
+✗ FAIL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+# 🛠 Troubleshooting
+
+| Problem | Solution |
+|----------|----------|
+| Browser won't connect | Restart Chrome with Remote Debugging |
+| Login expired | Login again using the debug browser |
+| Tool not detected | Update selectors in JSON |
+| Credits don't change | Verify Premium account |
+| Wrong deduction | Update expected credit values |
+| Browser closes | Keep Chrome open while testing |
+
+---
+
+# 💡 Best Practices
+
+✅ Keep Chrome open while testing
+
+✅ Do not interact with the browser during execution
+
+✅ Update pricing whenever plans change
+
+✅ Prefer JSON configuration over modifying Python
+
+✅ Keep test files inside the Test Data folder
+
+✅ Commit configuration updates together with pricing changes
+
+---
+
+# 🎉 That's It!
+
+Run one command:
+
+```bash
+python credits_deduction.py
+```
+
+The framework will automatically verify whether each tool deducts credits correctly and clearly report the result.
+
+---
+
+<div align="center">
+
+### Happy Testing! 🚀
+
+Made for the QA Team ❤️
+
+</div>
