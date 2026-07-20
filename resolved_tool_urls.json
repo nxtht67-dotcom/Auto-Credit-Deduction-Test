@@ -1,0 +1,153 @@
+{
+  "ocr.best": {
+    "base_url": "https://www.ocr.best",
+    "pricing_page": "/pricing-plans",
+    "tools": {
+      "Image to Text - Simple OCR": "/",
+      "Image to Text - Formatted OCR": "/",
+      "PDF to Excel - Without OCR": "/pdf-to-excel",
+      "PDF to Excel - With OCR": "/pdf-to-excel",
+      "Image Translator": "/image-translator",
+      "Image to Excel": "/image-to-excel",
+      "PDF to Word": "/pdf-to-word"
+    }
+  },
+  "imagetotext.cc": {
+    "base_url": "https://www.imagetotext.cc",
+    "pricing_page": "/pricing",
+    "tools": {
+      "Image To Text - Simple OCR": "/",
+      "Image To Text - Formatted OCR": "/",
+      "Image Translator": "/image-translator",
+      "PDF To Excel": "/pdf-to-excel"
+    },
+    "needs_confirmation": [
+      "Pricing modal separately lists an 'Image to Excel Weekly/Monthly' tier alongside the main plan tiers \u2014 confirm which credit allotment the test premium account maps to before trusting deduction math for Image to Excel here."
+    ]
+  },
+  "imagetotext.info": {
+    "base_url": "https://www.imagetotext.info",
+    "pricing_page": "/premium",
+    "tools": {
+      "Image To Text - Simple OCR": "/",
+      "Image To Text - Formatted OCR": "/",
+      "Image Translator": "/image-translator",
+      "JPG To Excel": "/jpg-to-excel",
+      "PDF To Excel - Without OCR": "/pdf-to-excel",
+      "PDF To Excel - With OCR": "/pdf-to-excel",
+      "PDF To Word": "/pdf-to-word",
+      "Word To Excel": "/word-to-excel",
+      "PPT To PDF": "/ppt-to-pdf"
+    }
+  },
+  "imagetotext.io": {
+    "base_url": "https://www.imagetotext.io",
+    "pricing_page": "/pricing-plan",
+    "tools": {
+      "Image to Text - Simple OCR": "/",
+      "Image to Text - Formatted OCR": "/",
+      "Image Translator": "/photo-translate",
+      "Image to Excel": "/image-to-excel",
+      "PDF To Word": "/pdf-to-word",
+      "PDF To Excel": "/pdf-to-excel"
+    },
+    "needs_confirmation": [
+      "Image Translator's slug is '/photo-translate', NOT '/image-translator' like every sibling imagetotext.* domain \u2014 do not let any slug-guessing logic assume consistency across these domains."
+    ]
+  },
+  "jpgtotext.com": {
+    "base_url": "https://www.jpgtotext.com",
+    "pricing_page": "/pricing",
+    "tools": {
+      "JPG to Text - Simple OCR": "/",
+      "JPG to Text - Formatted OCR": "/",
+      "JPG to Word - Simple": "/jpg-to-word",
+      "JPG to Word - OCR": "/jpg-to-word",
+      "JPG to Word - Formatted": "/jpg-to-word",
+      "JPG to Excel": "/jpg-to-excel",
+      "PDF to Word": "/pdf-to-word",
+      "PDF to Excel": "/pdf-to-excel",
+      "Word to JPG": "/word-to-jpg"
+    },
+    "needs_confirmation": [
+      "Mode selectors confirmed (Direct Image Insert radio) \u2014 no longer auto-skipped. credits_overview_data.txt still lists this mode as Free/up to 5MB per image [NOT PREMIUM], so a PASS here should show as no credit change; if it deducts credits on staging, that free-tier note needs updating."
+    ]
+  },
+  "editpad.org": {
+    "base_url": "https://www.editpad.org",
+    "pricing_page": "/tool/plans",
+    "quantity_check": false,
+    "tools": {
+      "Plagiarism Checker": "/tool/plagiarism-checker",
+      "Paraphrasing Tool": "/tool/paraphrasing-tool",
+      "Article Rewriter": "/tool/article-rewriter",
+      "Extract Text From Image": "/tool/image-to-text",
+      "Text Summarizer": "/tool/text-summarizer",
+      "AI Detector": "/tool/ai-content-detector",
+      "AI Essay Writer": "/tool/ai-essay-writer",
+      "AI Email Writer": "/tool/email-writer",
+      "Humanize AI Text": "/tool/humanize-ai-text"
+    }
+  },
+  "prepostseo.com": {
+    "base_url": "https://www.prepostseo.com",
+    "pricing_page": "/plans",
+    "quantity_check": false,
+    "tools": {
+      "Plagiarism Checker": "/plagiarism-checker",
+      "Paraphrasing Tool": "/paraphrasing-tool",
+      "Image to Text Converter": "/image-to-text",
+      "DA PA Checker": "/domain-authority-checker",
+      "AI Essay Writer": "/ai-essay-writer"
+    }
+  },
+  "grammarcheck.ai": {
+    "base_url": "https://www.grammarcheck.ai",
+    "pricing_page": "/pricing",
+    "plan_tier_note": "Pricing page shows 3 columns; 'Limited' = free tier, skip it. Test against the 2nd/3rd (paid) columns \u2014 values were identical across both in the source screenshot.",
+    "tools": {
+      "Grammar Checker": "/",
+      "Punctuation Checker": "/punctuation-checker",
+      "Paraphrase Tool": "/paraphrase-tool",
+      "Plagiarism Checker": "/plagiarism-checker",
+      "AI Checker": "/ai-checker",
+      "AI Humanizer": "/ai-humanizer",
+      "AI Summarizer": null
+    },
+    "needs_confirmation": [
+      "'AI Summarizer' footer link redirects off-domain to summarizer.org (same Enzipe backend). Confirm whether the deduction fires on grammarcheck.ai before the redirect, or whether this line item actually belongs to summarizer.org's own table. Do not point the script at either domain for this tool until confirmed."
+    ]
+  },
+  "summarizer.org": {
+    "base_url": "https://www.summarizer.org",
+    "pricing_page": "/pricing-plans",
+    "plan_tier_note": "3 columns, identical values across columns in the source screenshot \u2014 treated as a single rate.",
+    "tools": {
+      "Summarizer": "/",
+      "AI Paraphraser": "/paraphrasing-tool",
+      "AI Story Generator": "/ai-story-generator",
+      "Sentence Generator": "/sentence-generator",
+      "AI Essay Generator": "/essay-generator",
+      "Conclusion Generator": "/conclusion-generator",
+      "Grammar Checker": "/grammar-checker",
+      "AI Humanizer": "/ai-humanizer",
+      "Plagiarism Checker": "/plagiarism-checker",
+      "AI Answer Generator": "/ai-answer-generator",
+      "Sentence Expander": "/sentence-expander",
+      "Essay Extender": "/essay-extender"
+    }
+  },
+  "paraphrasing.io": {
+    "base_url": "https://www.paraphrasing.io",
+    "pricing_page": "/plans",
+    "plan_tier_note": "3 columns, identical values across columns in the source screenshot \u2014 treated as a single rate.",
+    "tools": {
+      "Paraphrasing Tool": "/",
+      "Article Rewriter": "/article-rewriter",
+      "Plagiarism Checker": "/plagiarism-checker",
+      "AI Content Detector": "/ai-content-detector",
+      "AI Humanizer": "/ai-humanizer",
+      "Text Summarizer": "/text-summarizer"
+    }
+  }
+}

@@ -1,0 +1,160 @@
+CREDITS OVERVIEW — EXTRACTED PER WEBSITE
+(Source: pricing/plans page screenshots. This file seeds the script's site list and
+per-tool credit cache described in the "Persistence" section of the main prompt.)
+
+=================================================================
+1. SITE: ocr.best
+   PRICING PAGE: ocr.best/pricing-plans
+   QUANTITY CHECK: YES (verify deduction AND exact amount on Live)
+-----------------------------------------------------------------
+Image to Text
+  - Simple OCR         -> 1 Credit / Image
+  - Formatted OCR       -> 10 Credits / Image
+PDF to Excel
+  - Without OCR         -> 1 Credit / Page
+  - With OCR            -> 20 Credits / Page
+Image Translator        -> 15 Credits / Image
+Image to Excel          -> 20 Credits / Image
+PDF to Word             -> 1 Credit / Page
+
+=================================================================
+2. SITE: imagetotext.cc
+   PRICING PAGE: imagetotext.cc/pricing
+   QUANTITY CHECK: YES
+-----------------------------------------------------------------
+Image To Text
+  - Simple OCR          -> 1 credit / Image
+  - Formatted OCR       -> 10 credits / Image
+Image Translator        -> 15 credits / Image
+PDF To Excel            -> 1 credit / Page
+
+=================================================================
+3. SITE: imagetotext.info
+   PRICING PAGE: imagetotext.info/premium
+   QUANTITY CHECK: YES
+-----------------------------------------------------------------
+Image To Text
+  - Simple OCR          -> 1 credit / Image
+  - Formatted OCR       -> 10 credits / Image
+Image Translator        -> 15 credits / Image
+JPG To Excel            -> 20 credits / Image
+PDF To Excel
+  - Without OCR         -> 1 credit / Page
+  - With OCR            -> 20 credits / Page
+PDF To Word             -> 1 credit / Page
+Word To Excel           -> 20 credits / File
+PPT To PDF              -> 20 credits / File
+
+=================================================================
+4. SITE: imagetotext.io
+   PRICING PAGE: imagetotext.io/pricing-plan
+   QUANTITY CHECK: YES
+-----------------------------------------------------------------
+Image to Text
+  - Simple OCR          -> 1 Credit / Image
+  - Formatted OCR       -> 10 Credits / Image
+Image Translator        -> 15 Credits / Image
+Image to Excel          -> 20 Credits / Image
+PDF To Word             -> 1 Credit / Page
+PDF To Excel            -> 1 Credit / Page
+
+=================================================================
+5. SITE: jpgtotext.com
+   PRICING PAGE: jpgtotext.com/pricing
+   QUANTITY CHECK: YES
+-----------------------------------------------------------------
+ALL TOOLS
+  - Word to JPG          -> 1 credit / File
+  - JPG to Excel         -> 3 credits / Image
+  - PDF to Word          -> 1 credit / Page
+  - PDF to Excel         -> 1 credit / Page
+JPG TO TEXT - Features
+  - Simple OCR           -> 1 credit / Image
+  - Formatted OCR        -> 10 credits / Image
+JPG TO WORD - Features
+  - Simple               -> Free (up to 5MB per image) [NOT PREMIUM]
+  - OCR                  -> 2 credits / Image
+  - Formatted            -> 10 credits / Image
+
+=================================================================
+6. SITE: editpad.org
+   PLANS PAGE: editpad.org/tool/plans
+   QUANTITY CHECK: NO — DEDUCTION-ONLY CHECK (all envs, incl. Live)
+   NOTE: Plans page only shows a checklist of which tools are included
+   in premium — no per-tool credit/quantity values are shown at all.
+-----------------------------------------------------------------
+Premium tools (checklist, no credit values shown):
+  - Plagiarism Checker
+  - Paraphrasing Tool
+  - Article Rewriter
+  - Extract Text From Image
+  - Text Summarizer
+  - AI Detector
+  - AI Essay Writer
+  - AI Email Writer
+  - Humanize AI Text
+
+=================================================================
+7. SITE: prepostseo.com
+   PLANS PAGE: prepostseo.com/plans
+   QUANTITY CHECK: NO — DEDUCTION-ONLY CHECK (all envs, incl. Live)
+   NOTE: Same checklist format as editpad.org — no credit values shown.
+-----------------------------------------------------------------
+Premium tools (checklist, no credit values shown):
+  - Plagiarism Checker
+  - Paraphrasing Tool
+  - Image to Text Converter
+  - DA PA Checker
+  - AI Essay Writer
+
+=================================================================
+8. SITE: grammarcheck.ai
+   PRICING PAGE: grammarcheck.ai/pricing
+   QUANTITY CHECK: YES
+   NOTE: Page shows 3 plan-tier columns. "Limited" column = free/limited
+   tier (skip). The 2nd and 3rd columns are the paid tiers being tested;
+   values were identical across both paid columns in the screenshot.
+-----------------------------------------------------------------
+Grammar Checker           -> 1 credit / word   (Limited tier: free/limited use)
+Punctuation Checker       -> 1 credit / word   (Limited tier: free/limited use)
+Paraphrase Tool           -> 1 credit / word   (Limited tier: free/limited use)
+Plagiarism Checker        -> 3 credits / word
+AI Checker                -> 3 credits / word
+AI Humanizer              -> 5 credits / word
+AI Summarizer             -> 1 credit / word
+
+=================================================================
+9. SITE: summarizer.org
+   PRICING PAGE: summarizer.org/pricing-plans
+   QUANTITY CHECK: YES
+   NOTE: "Credits Per 1 Word" table, 3 columns shown with identical
+   values across columns in the screenshot (treat as single rate).
+-----------------------------------------------------------------
+Summarizer                -> 1 credit / word
+AI Paraphraser            -> 10 credits / word
+AI Story Generator        -> 10 credits / word
+Sentence Generator        -> 1 credit / word
+AI Essay Generator        -> 10 credits / word
+Conclusion Generator      -> 1 credit / word
+Grammar Checker           -> 10 credits / word
+AI Humanizer              -> 30 credits / word
+Plagiarism Checker        -> 15 credits / word
+AI Answer Generator       -> 1 credit / word
+Sentence Expander         -> 1 credit / word
+Essay Extender            -> 1 credit / word
+
+=================================================================
+10. SITE: paraphrasing.io
+    PRICING PAGE: paraphrasing.io/plans
+    QUANTITY CHECK: YES
+    NOTE: 3 columns shown with identical values across columns in the
+    screenshot (treat as single rate).
+-----------------------------------------------------------------
+Paraphrasing Tool          -> 1 credit / word
+Article Rewriter           -> 1 credit / word
+Plagiarism Checker         -> 4 credits / word
+AI Content Detector        -> 3 credits / word
+AI Humanizer               -> 20 credits / word
+Text Summarizer            -> 1 credit / word
+
+=================================================================

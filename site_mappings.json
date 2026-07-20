@@ -1,0 +1,1188 @@
+{
+  "ocr.best": {
+    "pricing_url": "https://www.ocr.best/pricing-plans",
+    "account_url": "https://www.ocr.best/account",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "Image to Text - Simple OCR",
+        "url": "https://www.ocr.best/",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image to Text - Formatted OCR",
+        "url": "https://www.ocr.best/",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "image",
+        "pre_action": [
+          "label[data-mode='formatted']",
+          "[data-mode='formatted']",
+          "button:has-text('Formatted')",
+          "role=button[name='Formatted']",
+          "text=Formatted"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF to Excel - Without OCR",
+        "url": "https://www.ocr.best/pdf-to-excel",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [
+          "label[data-mode='without-ocr']",
+          "[data-mode='without-ocr']",
+          "button:has-text('Without OCR')",
+          "role=button[name='Without OCR']",
+          "text=Without OCR"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF to Excel - With OCR",
+        "url": "https://www.ocr.best/pdf-to-excel",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "pdf",
+        "pre_action": [
+          "label[data-mode='with-ocr']",
+          "[data-mode='with-ocr']",
+          "button:has-text('With OCR')",
+          "role=button[name='With OCR']",
+          "text=With OCR"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image Translator",
+        "url": "https://www.ocr.best/image-translator",
+        "is_premium": true,
+        "cost": 15,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image to Excel",
+        "url": "https://www.ocr.best/image-to-excel",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF to Word",
+        "url": "https://www.ocr.best/pdf-to-word",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  },
+  "imagetotext.cc": {
+    "pricing_url": "https://www.imagetotext.cc/pricing",
+    "account_url": "https://www.imagetotext.cc/profile",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "Image To Text - Simple OCR",
+        "url": "https://www.imagetotext.cc/",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image To Text - Formatted OCR",
+        "url": "https://www.imagetotext.cc/",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "image",
+        "pre_action": [
+          "label[data-mode='formatted']",
+          "[data-mode='formatted']",
+          "button:has-text('Formatted')",
+          "role=button[name='Formatted']",
+          "text=Formatted"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image Translator",
+        "url": "https://www.imagetotext.cc/image-translator",
+        "is_premium": true,
+        "cost": 15,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF To Excel",
+        "url": "https://www.imagetotext.cc/pdf-to-excel",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  },
+  "imagetotext.info": {
+    "pricing_url": "https://www.imagetotext.info/premium",
+    "account_url": "https://www.imagetotext.info/profile",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "Image To Text - Simple OCR",
+        "url": "https://www.imagetotext.info/",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image To Text - Formatted OCR",
+        "url": "https://www.imagetotext.info/",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "image",
+        "pre_action": [
+          "label[data-mode='formatted']",
+          "[data-mode='formatted']",
+          "button:has-text('Formatted')",
+          "role=button[name='Formatted']",
+          "text=Formatted"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image Translator",
+        "url": "https://www.imagetotext.info/image-translator",
+        "is_premium": true,
+        "cost": 15,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "JPG To Excel",
+        "url": "https://www.imagetotext.info/jpg-to-excel",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF To Excel - Without OCR",
+        "url": "https://www.imagetotext.info/pdf-to-excel",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [
+          "label[data-mode='without-ocr']",
+          "[data-mode='without-ocr']",
+          "button:has-text('Without OCR')",
+          "role=button[name='Without OCR']",
+          "text=Without OCR"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF To Excel - With OCR",
+        "url": "https://www.imagetotext.info/pdf-to-excel",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "pdf",
+        "pre_action": [
+          "label[data-mode='with-ocr']",
+          "[data-mode='with-ocr']",
+          "button:has-text('With OCR')",
+          "role=button[name='With OCR']",
+          "text=With OCR"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF To Word",
+        "url": "https://www.imagetotext.info/pdf-to-word",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Word To Excel",
+        "url": "https://www.imagetotext.info/word-to-excel",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "word",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PPT To PDF",
+        "url": "https://www.imagetotext.info/ppt-to-pdf",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "ppt",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  },
+  "imagetotext.io": {
+    "pricing_url": "https://www.imagetotext.io/pricing-plan",
+    "account_url": "https://www.imagetotext.io/user-account",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "Image to Text - Simple OCR",
+        "url": "https://www.imagetotext.io/",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image to Text - Formatted OCR",
+        "url": "https://www.imagetotext.io/",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "image",
+        "pre_action": [
+          "label[data-mode='formatted']",
+          "[data-mode='formatted']",
+          "button:has-text('Formatted')",
+          "role=button[name='Formatted']",
+          "text=Formatted"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image Translator",
+        "url": "https://www.imagetotext.io/photo-translate",
+        "is_premium": true,
+        "cost": 15,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image to Excel",
+        "url": "https://www.imagetotext.io/image-to-excel",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF To Word",
+        "url": "https://www.imagetotext.io/pdf-to-word",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF To Excel",
+        "url": "https://www.imagetotext.io/pdf-to-excel",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  },
+  "jpgtotext.com": {
+    "pricing_url": "https://www.jpgtotext.com/pricing",
+    "account_url": "https://www.jpgtotext.com/manage-plans",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "JPG to Text - Simple OCR",
+        "url": "https://www.jpgtotext.com/",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "pre_action": [
+          "button.ocr-options-btn[mode='1']",
+          "button[mode='1']",
+          "button.ocr-options-btn:has-text('Simple OCR')",
+          "text=Simple OCR"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "JPG to Text - Formatted OCR",
+        "url": "https://www.jpgtotext.com/",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "image",
+        "pre_action": [
+          "button.ocr-options-btn[mode='2']",
+          "button[mode='2']",
+          "button.ocr-options-btn:has-text('Formatted OCR')",
+          "text=Formatted OCR"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "JPG to Word - Simple",
+        "url": "https://www.jpgtotext.com/jpg-to-word",
+        "is_premium": false,
+        "cost": 0,
+        "file_type": "image",
+        "pre_action": [
+          "label:has-text('Direct Image Insert')",
+          "text=Direct Image Insert"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "JPG to Word - OCR",
+        "url": "https://www.jpgtotext.com/jpg-to-word",
+        "is_premium": true,
+        "cost": 2,
+        "file_type": "image",
+        "pre_action": [
+          "label:has-text('Extract Text (Plain)')",
+          "text=Extract Text (Plain)"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "JPG to Word - Formatted",
+        "url": "https://www.jpgtotext.com/jpg-to-word",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "image",
+        "pre_action": [
+          "label:has-text('Extract Text (Formatted)')",
+          "text=Extract Text (Formatted)"
+        ],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "JPG to Excel",
+        "url": "https://www.jpgtotext.com/jpg-to-excel",
+        "is_premium": true,
+        "cost": 3,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF to Word",
+        "url": "https://www.jpgtotext.com/pdf-to-word",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "PDF to Excel",
+        "url": "https://www.jpgtotext.com/pdf-to-excel",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "pdf",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Word to JPG",
+        "url": "https://www.jpgtotext.com/word-to-jpg",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "word",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  },
+  "editpad.org": {
+    "pricing_url": "https://staging.editpad.org/tool/plans",
+    "account_url": "https://staging.editpad.org/tool/account#plan",
+    "quantityCheckSupported": false,
+    "tools": [
+      {
+        "name": "Plagiarism Checker",
+        "url": "https://www.editpad.org/tool/plagiarism-checker",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Paraphrasing Tool",
+        "url": "https://www.editpad.org/tool/paraphrasing-tool",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Article Rewriter",
+        "url": "https://www.editpad.org/tool/article-rewriter",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Extract Text From Image",
+        "url": "https://www.editpad.org/tool/image-to-text",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Text Summarizer",
+        "url": "https://www.editpad.org/tool/text-summarizer",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Detector",
+        "url": "https://www.editpad.org/tool/ai-content-detector",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Essay Writer",
+        "url": "https://www.editpad.org/tool/ai-essay-writer",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Email Writer",
+        "url": "https://www.editpad.org/tool/email-writer",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Humanize AI Text",
+        "url": "https://www.editpad.org/tool/humanize-ai-text",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "jpg-to-word",
+        "url": "https://staging.editpad.org/tool/jpg-to-word",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "selectors": {
+          "file_input": "<span class=\"mybtn\" onclick=\"activupload()\" id=\"uploadBtn\">",
+          "submit_btn": "<img src=\"https://staging.editpad.org/web_assets/frontend/images/new-icon/upload-icon-itt.svg\" alt=\"Upload Icon\">",
+          "result_indicator": "<span class=\"before\">Upload File</span>"
+        },
+        "skip": false
+      }
+    ]
+  },
+  "prepostseo.com": {
+    "pricing_url": "https://www.prepostseo.com/plans",
+    "account_url": "https://www.prepostseo.com/account",
+    "quantityCheckSupported": false,
+    "tools": [
+      {
+        "name": "Plagiarism Checker",
+        "url": "https://www.prepostseo.com/plagiarism-checker",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Paraphrasing Tool",
+        "url": "https://www.prepostseo.com/paraphrasing-tool",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Image to Text Converter",
+        "url": "https://www.prepostseo.com/image-to-text",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "image",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "DA PA Checker",
+        "url": "https://www.prepostseo.com/domain-authority-checker",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Essay Writer",
+        "url": "https://www.prepostseo.com/ai-essay-writer",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  },
+  "grammarcheck.ai": {
+    "pricing_url": "https://www.grammarcheck.ai/pricing",
+    "account_url": "https://www.grammarcheck.ai/profile",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "Grammar Checker",
+        "url": "https://www.grammarcheck.ai/",
+        "is_premium": false,
+        "cost": 0,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Punctuation Checker",
+        "url": "https://www.grammarcheck.ai/punctuation-checker",
+        "is_premium": false,
+        "cost": 0,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Paraphrase Tool",
+        "url": "https://www.grammarcheck.ai/paraphrase-tool",
+        "is_premium": false,
+        "cost": 0,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Plagiarism Checker",
+        "url": "https://www.grammarcheck.ai/plagiarism-checker",
+        "is_premium": true,
+        "cost": 3,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Checker",
+        "url": "https://www.grammarcheck.ai/ai-checker",
+        "is_premium": true,
+        "cost": 3,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Humanizer",
+        "url": "https://www.grammarcheck.ai/ai-humanizer",
+        "is_premium": true,
+        "cost": 5,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Summarizer",
+        "url": "",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": true
+      }
+    ]
+  },
+  "summarizer.org": {
+    "pricing_url": "https://www.summarizer.org/pricing-plans",
+    "account_url": "https://www.summarizer.org/my-account#plan_details",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "Summarizer",
+        "url": "https://www.summarizer.org/",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Paraphraser",
+        "url": "https://www.summarizer.org/paraphrasing-tool",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Story Generator",
+        "url": "https://www.summarizer.org/ai-story-generator",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Sentence Generator",
+        "url": "https://www.summarizer.org/sentence-generator",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Essay Generator",
+        "url": "https://www.summarizer.org/essay-generator",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Conclusion Generator",
+        "url": "https://www.summarizer.org/conclusion-generator",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Grammar Checker",
+        "url": "https://www.summarizer.org/grammar-checker",
+        "is_premium": true,
+        "cost": 10,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Humanizer",
+        "url": "https://www.summarizer.org/ai-humanizer",
+        "is_premium": true,
+        "cost": 30,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Plagiarism Checker",
+        "url": "https://www.summarizer.org/plagiarism-checker",
+        "is_premium": true,
+        "cost": 15,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Answer Generator",
+        "url": "https://www.summarizer.org/ai-answer-generator",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Sentence Expander",
+        "url": "https://www.summarizer.org/sentence-expander",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Essay Extender",
+        "url": "https://www.summarizer.org/essay-extender",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  },
+  "paraphrasing.io": {
+    "pricing_url": "https://www.paraphrasing.io/plans",
+    "account_url": "https://www.paraphrasing.io/user/profile",
+    "quantityCheckSupported": true,
+    "tools": [
+      {
+        "name": "Paraphrasing Tool",
+        "url": "https://www.paraphrasing.io/",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Article Rewriter",
+        "url": "https://www.paraphrasing.io/article-rewriter",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Plagiarism Checker",
+        "url": "https://www.paraphrasing.io/plagiarism-checker",
+        "is_premium": true,
+        "cost": 4,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Content Detector",
+        "url": "https://www.paraphrasing.io/ai-content-detector",
+        "is_premium": true,
+        "cost": 3,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "AI Humanizer",
+        "url": "https://www.paraphrasing.io/ai-humanizer",
+        "is_premium": true,
+        "cost": 20,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      },
+      {
+        "name": "Text Summarizer",
+        "url": "https://www.paraphrasing.io/text-summarizer",
+        "is_premium": true,
+        "cost": 1,
+        "file_type": "text",
+        "pre_action": [],
+        "selectors": {
+          "file_input": "input#file",
+          "submit_btn": "button#submitBtn",
+          "result_indicator": ""
+        },
+        "skip": false
+      }
+    ]
+  }
+}
