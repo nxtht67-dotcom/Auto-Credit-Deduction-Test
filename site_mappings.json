@@ -1,7 +1,7 @@
 {
   "ocr.best": {
-    "pricing_url": "https://staging.ocr.best/pricing-plans",
-    "account_url": "https://staging.ocr.best/account",
+    "pricing_url": "https://www.ocr.best/pricing-plans",
+    "account_url": "https://www.ocr.best/account",
     "quantityCheckSupported": true,
     "tools": [
       {

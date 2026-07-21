@@ -686,16 +686,47 @@ def close_browser(browser_name, wait_timeout_s=10):
     many extensions/tabs, the process can still be tearing down well past 1.5s, and relaunching
     into a profile that's still mid-teardown is exactly the kind of race that produces a
     silently-broken debug instance (process starts, but never opens the debugging port).
-    Polls tasklist instead of guessing a fixed delay."""
-    exe_name = f"{browser_name.lower()}.exe"
+    Polls tasklist instead of guessing a fixed delay.
+
+    Edge specifically has a "Startup boost" setting (edge://settings/system → "Continue
+    running background extensions and apps when Microsoft Edge is closed") that can respawn
+    a background msedge.exe almost immediately after it's killed. If that respawned instance
+    is running WITHOUT the debugging flag and grabs the profile's singleton lock first, the
+    next launch (even with --remote-debugging-port set) gets silently handed off to it via
+    Chromium's single-instance mechanism instead of actually starting fresh — a window may
+    still appear, but debugging was never enabled on it. Sweeping multiple times, and also
+    killing Edge's background helper processes, catches this instead of just killing once
+    and assuming it's gone."""
+    exe_name = get_exe_name_for_browser(browser_name)
+    helper_processes = []
     if browser_name == "Edge":
-        exe_name = "msedge.exe"
+        # Background helpers that can keep a profile lock alive even after msedge.exe itself
+        # is killed once — msedgewebview2.exe in particular is what Startup Boost keeps alive.
+        helper_processes = ["msedgewebview2.exe", "identity_helper.exe"]
+
     print(f"Closing {browser_name} browser to release profile locks...")
+
+    def kill_sweep():
+        for name in [exe_name] + helper_processes:
+            try:
+                subprocess.run(["taskkill", "/F", "/IM", name], capture_output=True, check=False)
+            except Exception:
+                pass
+
     try:
-        subprocess.run(["taskkill", "/F", "/IM", exe_name], capture_output=True, check=True)
+        kill_sweep()
     except Exception as e:
         print(f"Could not automatically close browser: {e}")
         return
+
+    # Repeat-sweep for a couple seconds to catch an instant respawn (Edge's Startup Boost)
+    # rather than a single kill-and-hope — if it respawns between our kill and the next
+    # launch attempt, that respawned instance silently steals the debug launch.
+    sweep_deadline = time.time() + 3
+    while time.time() < sweep_deadline:
+        if is_browser_process_running(browser_name):
+            kill_sweep()
+        time.sleep(0.4)
 
     deadline = time.time() + wait_timeout_s
     while time.time() < deadline:
@@ -729,11 +760,61 @@ def clear_stale_singleton_locks(user_data_dir):
         except Exception:
             pass  # best-effort cleanup — a failure here shouldn't block the actual launch attempt
 
+def get_exe_name_for_browser(browser_name):
+    """Map a browser choice ('Chrome'/'Brave'/'Edge'/'Firefox') to its actual process name."""
+    return "msedge.exe" if browser_name == "Edge" else f"{browser_name.lower()}.exe"
+
+def get_process_holding_port(port):
+    """Return the exe name (e.g. 'brave.exe') of whichever process is actually bound to this
+    port, by resolving the LISTENING PID from netstat and looking it up in tasklist. Returns
+    None if it can't be determined.
+
+    This exists because is_port_in_use() alone can't tell WHICH browser opened the port — if
+    Brave was left running with debugging enabled from an earlier session, is_port_in_use()
+    still returns True even when the person just chose Edge this run, and the script would
+    silently keep using Brave instead of ever launching Edge at all."""
+    try:
+        res = subprocess.run(["netstat", "-ano"], capture_output=True, text=True, check=True)
+        pid = None
+        for line in res.stdout.splitlines():
+            if "LISTENING" in line and re.search(rf"[:.]{port}\s", line):
+                pid = line.split()[-1]
+                break
+        if not pid:
+            return None
+        res2 = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"], capture_output=True, text=True, check=True)
+        for line in res2.stdout.splitlines():
+            if pid in line:
+                return line.split()[0].lower()
+    except Exception:
+        pass
+    return None
+
 def ensure_browser_debugging(browser_name, _retry=True):
     """Make sure browser is running with remote debugging enabled on DEBUG_PORT."""
+    expected_exe = get_exe_name_for_browser(browser_name)
+
     if is_port_in_use(DEBUG_PORT):
-        print(f"Debugging port {DEBUG_PORT} is active.")
-        return True
+        holder_exe = get_process_holding_port(DEBUG_PORT)
+        if holder_exe is None or holder_exe == expected_exe:
+            # Either it's genuinely the requested browser, or we couldn't identify the holder
+            # at all (in which case assume it's fine rather than force-closing something we
+            # can't confirm — safer to proceed than to kill an unrelated process by mistake).
+            print(f"Debugging port {DEBUG_PORT} is active.")
+            return True
+        else:
+            # A DIFFERENT browser (e.g. Brave left running from an earlier session) is
+            # holding the port than the one just requested (e.g. Edge) — close it and fall
+            # through to actually launch the requested browser below, instead of silently
+            # reusing whatever happened to already be open.
+            print(f"Port {DEBUG_PORT} is currently held by {holder_exe}, not {expected_exe} — closing it so {browser_name} can be used instead.")
+            try:
+                subprocess.run(["taskkill", "/F", "/IM", holder_exe], capture_output=True, check=True)
+            except Exception as e:
+                print(f"[WARN] Could not close {holder_exe}: {e}")
+            deadline = time.time() + 10
+            while time.time() < deadline and is_port_in_use(DEBUG_PORT):
+                time.sleep(0.3)
 
     # Get browser settings
     cfg = BROWSER_CONFIGS.get(browser_name)
@@ -813,6 +894,12 @@ def ensure_browser_debugging(browser_name, _retry=True):
 
         print(f"The browser process may still be running but never opened port {DEBUG_PORT}.")
         print(f"Profile directory in use: {cfg['user_data']}")
+        if browser_name == "Edge":
+            print("Edge specifically has a 'Startup boost' setting that can silently relaunch")
+            print("a background copy of itself right after being closed, which then steals the")
+            print("next launch before debugging ever gets enabled on it. Try turning this off:")
+            print("  edge://settings/system -> 'Continue running background extensions and")
+            print("  apps when Microsoft Edge is closed' -> OFF, then re-run the script.")
         print("Try closing ALL browser windows/processes manually (check Task Manager for")
         print("lingering entries — including any hidden background/updater processes), then")
         print("re-run the script. If this keeps happening, another program (antivirus, a")
