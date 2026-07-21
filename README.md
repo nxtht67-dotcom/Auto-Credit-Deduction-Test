@@ -1,363 +1,193 @@
 <div align="center">
 
-# 🚀 Credit Deduction QA Automation
+# credit-deduction-qa
 
-### Automated Playwright framework for validating premium credit deduction across multiple SaaS tools.
+**A Playwright-based QA automation tool that verifies whether SaaS tools correctly deduct credits/quota from a user's account when a conversion or generation action is run.**
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-Automation-2EAD33?logo=playwright&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
-![QA](https://img.shields.io/badge/Purpose-QA%20Automation-blue)
+![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
+![Playwright](https://img.shields.io/badge/playwright-automation-45ba4b?logo=playwright&logoColor=white)
+![Status](https://img.shields.io/badge/status-active-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 </div>
 
 ---
 
-# 📚 Table of Contents
+Built to test a portfolio of **10 content/OCR/writing-tool websites** that share a common
+underlying billing backend, across staging and live environments — driven by a real
+logged-in browser session (via Chrome DevTools Protocol), not a mocked one.
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Project Structure](#-project-structure)
+## 📋 Table of contents
+
+- [What it does](#-what-it-does)
+- [Why this isn't a simple script](#-why-this-isnt-a-simple-click-a-button-and-check-a-number-script)
+- [Architecture](#-architecture)
+- [Supported sites](#-supported-sites)
 - [Requirements](#-requirements)
-- [Quick Start](#-quick-start)
-- [How It Works](#-how-it-works)
-- [Configuration Files](#-configuration-files)
-- [Adding a New Tool](#-adding-a-new-tool)
-- [Example Output](#-example-output)
-- [Troubleshooting](#-troubleshooting)
-- [Best Practices](#-best-practices)
+- [Usage](#-usage)
+- [Project structure](#-project-structure)
+- [Known limitations](#-known-limitations)
 
 ---
 
-# 🎯 Overview
+## 🎯 What it does
 
-This project automates **credit deduction verification** for premium SaaS tools.
+For every tool on a site, the script:
 
-Instead of manually checking credits after every conversion, the script automatically:
+| Step | Action |
+|---|---|
+| **1. Read** | Capture the account's current credit balance |
+| **2. Run** | Upload a test file (or type sample text, where the tool has no file input) and click the tool's convert/submit button |
+| **3. Wait** | Poll for a real completion signal — not a fixed timer |
+| **4. Verify** | Re-read the balance and compare |
 
-- Reads the user's current credits
-- Performs the conversion
-- Waits until processing completes
-- Reads credits again
-- Reports whether the expected deduction occurred
-
-Supported tools include:
-
-- 🖼️ Image to Text
-- 📄 PDF Tools
-- 🌍 OCR Tools
-- 🤖 AI Writing Tools
-- ✨ Paraphrasing
-- 📝 Grammar Tools
-- and many more...
+Result: **✅ PASS** if the balance changed, **❌ FAIL** if it didn't — and on sites that expose
+an exact per-tool credit rate, it can additionally verify the *exact* amount deducted.
 
 ---
 
-# ✨ Features
+## 🧩 Why this isn't a simple "click a button and check a number" script
 
-| Feature | Description |
-|----------|-------------|
-| ✅ Automatic Credit Verification | Checks credits before and after every test |
-| 🌐 Multi-site Support | Test multiple websites from one framework |
-| ⚙️ Configuration Driven | Add tools without changing Python code |
-| 📂 Multiple File Types | Images, PDFs, DOCX, PPTX, Text |
-| 📊 Quantity Validation | Verifies exact deduction where supported |
-| 🎨 Colorized Output | Easy-to-read PASS / FAIL console logs |
-| 🔍 Smart Waiting | Waits for real completion instead of fixed delays |
+Every one of the 10 target sites renders its UI differently, and several behaviors that
+looked reliable on one site turned out to be wrong on another. The design reflects real
+failure modes hit while building it — not theoretical edge cases.
 
----
+<details>
+<summary><b>No single "credit balance" format</b></summary>
+<br>
 
-# 📁 Project Structure
+Some sites show a `used / total` ratio in one element; others (e.g. a "Plan Details" table)
+split the same info across `Credits Allowed` / `Credits Used` columns; others show a plain
+`"<N> used"` string next to an `Unlimited` allowance that must be ignored. The balance reader
+tries several extraction strategies per site rather than assuming one layout.
+</details>
 
-```text
-.
-├── credits_deduction.py          ⭐ Main Script
-├── credits_deduction_save.py     Backup Version
-├── resolved_tool_urls.json       Tool Configuration
-├── site_mappings.json            Website Mapping
-├── credits_overview_data.txt     Expected Credit Costs
-├── debug_dumps/                  Screenshots & HTML on failures
-└── README.md
-```
+<details>
+<summary><b>Multiple independent credit pools</b></summary>
+<br>
 
----
+Some accounts show more than one pool at once — e.g. a "Monthly" plan and a "Premium" plan
+simultaneously, or per-tool-category pools like "Plagiarism Checker" vs "AI Writing Tools".
+The script isolates and checks the *specific* pool a given tool actually draws from, instead
+of treating the whole page as one balance and getting confused when only one of several
+numbers moves.
+</details>
 
-# ⚙️ Requirements
+<details>
+<summary><b>Convert buttons aren't consistently &lt;button&gt; elements</b></summary>
+<br>
 
-## Software
+Some sites use a styled `<div>`/`<span>` with a click handler instead. Selector matching
+falls back through button → div/span → link → `[role=button]`, guarded so it never
+blind-clicks an ambiguous match (e.g. a site-wide nav link that happens to also say "Convert").
+</details>
 
-- Python **3.11+**
-- Google Chrome
-- Playwright
+<details>
+<summary><b>"Reload the balance" isn't always a real reload</b></summary>
+<br>
 
----
+Navigating to the exact same account-page URL twice in a row can leave a single-page app
+showing stale, cached numbers until a real (cache-busted) navigation is forced.
+</details>
 
-## Install Dependencies
+<details>
+<summary><b>Some tools take typed/pasted text, not a file upload</b></summary>
+<br>
 
-```bash
-pip install playwright
-```
+A few tools have no upload control at all — sample text is typed into the relevant
+textarea/contenteditable element instead, sometimes with no submit button at all
+(auto-analyzes on input).
+</details>
 
-```bash
-playwright install
-```
-
----
-
-# 🚀 Quick Start
-
-## Step 1 — Launch Chrome
-
-Close every Chrome window first.
-
-```cmd
-chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\ChromeAutomation"
-```
+Each of these is handled through a small number of **general-purpose, config-driven
+mechanisms** rather than one-off hacks per site, so adding a new site or tool is mostly a
+matter of adding data, not new control flow.
 
 ---
 
-## Step 2 — Login
+## 🏗️ Architecture
 
-Using the opened browser:
-
-✅ Login to Premium Account
-
-✅ Keep Chrome open
-
-❌ Do NOT close it
-
----
-
-## Step 3 — Configure Test Data
-
-Inside **credits_deduction.py**
-
-```python
-TEST_DATA_DIR = r"C:\Users\<YourName>\Desktop\Test Data"
-```
-
-Example folder:
-
-```text
-Test Data
-│
-├── sample.jpg
-├── sample.pdf
-├── sample.docx
-├── sample.pptx
-└── sample.txt
-```
+| Concern | Mechanism |
+|---|---|
+| Finding a submit/convert control | `find_clickable()` — tries a prioritized candidate-selector list per (site, tool), skipping any match that's ambiguous (matches >1 element) rather than guessing |
+| Reading the credit balance | `get_credit_balance()` — generic whole-page extraction by default; `get_credit_balance_for_pool()` for sites with multiple/separately-labeled pools |
+| Per-tool selector/behavior overrides | Small lookup dicts keyed by `(domain, tool_name)` — `SUBMIT_BTN_OVERRIDES`, `RESULT_INDICATOR_OVERRIDES`, `TEXT_INPUT_OVERRIDES` — checked ahead of generic guessing, with a `"default"` fallback per site |
+| Detecting a finished conversion | Two-tier selector list: high-confidence markers (a real "Start Over"/download control, which can only exist once a result exists) checked first, weaker guessed markers as a fallback |
+| Stale/cached account pages | `cache_busted_url()` appends a changing query param so every balance check is a genuinely fresh navigation |
+| Adding a new tool | Interactive wizard (`prompt_new_tool_wizard()`) — paste the tool's selectors once, it's saved to `site_mappings.json` and already there next run |
+| Debuggability | `dump_debug_info()` saves a screenshot + relevant HTML snippet whenever a selector fails to match, so a fix can be written from real markup instead of guessing blind |
 
 ---
 
-## Step 4 — Run
+## 🌐 Supported sites
+
+<table>
+<tr>
+<td>editpad.org</td><td>grammarcheck.ai</td><td>imagetotext.cc</td><td>imagetotext.info</td><td>imagetotext.io</td>
+</tr>
+<tr>
+<td>jpgtotext.com</td><td>ocr.best</td><td>paraphrasing.io</td><td>prepostseo.com</td><td>summarizer.org</td>
+</tr>
+</table>
+
+Per-site tool lists, resolved tool URLs, and per-tool credit rates are seeded from
+`credits_overview_data.txt` / `resolved_tool_urls.json` and cached to `site_mappings.json`
+on first run.
+
+---
+
+## ⚙️ Requirements
+
+- Python 3.12
+- Playwright for Python
+  ```bash
+  pip install playwright
+  playwright install
+  ```
+- A Chromium-based browser (Brave/Chrome/Edge) — the script launches it with
+  `--remote-debugging-port=9222` if it isn't already running that way, so it can attach to
+  your real logged-in session rather than a blank automated profile
+
+---
+
+## ▶️ Usage
 
 ```bash
 python credits_deduction.py
 ```
 
+You'll be prompted to pick an environment (Staging/Live), then a site (or "Run All Sites").
+The script opens an account tab and a tool tab, and walks through each of that site's tools —
+with the option to add a new tool interactively before the run starts.
+
 ---
 
-# 🔄 How It Works
+## 📁 Project structure
 
-```text
-┌────────────────────┐
-│ Read Current Credit│
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Open Target Tool   │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Upload/Test Input  │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Run Conversion     │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Wait for Result    │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Read Credits Again │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Compare Values     │
-└─────────┬──────────┘
-          │
-      PASS / FAIL
+```
+credits_deduction.py        # main script
+site_mappings.json           # cached per-site tool list + resolved URLs (auto-generated/merged)
+credits_overview_data.txt    # seed: per-site tool → credit rate
+resolved_tool_urls.json      # seed: per-site tool → confirmed URL path
+Test Data/                   # sample upload files, organized by type (image/, pdf/, word/, txt/, ...)
+debug_dumps/                 # auto-saved screenshots + HTML snippets on selector failures
 ```
 
 ---
 
-# 🗂 Configuration Files
+## ⚠️ Known limitations
 
-## 📄 resolved_tool_urls.json
-
-Contains:
-
-- Tool URLs
-- Expected credit cost
-- File type
-- Selectors
-- Premium flag
-- Pre-actions
-- Skip rules
-
----
-
-## 🌐 site_mappings.json
-
-Contains:
-
-- Base URLs
-- Pricing Pages
-- Tool Paths
-- Website Notes
-
----
-
-## 💳 credits_overview_data.txt
-
-Reference list of expected premium credit costs.
-
-Update whenever pricing changes.
-
----
-
-# ➕ Adding a New Tool
-
-### 1️⃣ Add Tool Information
-
-Update:
-
-```
-resolved_tool_urls.json
-```
-
----
-
-### 2️⃣ Add Site Mapping
-
-Update:
-
-```
-site_mappings.json
-```
-
----
-
-### 3️⃣ Update Credit Cost
-
-Update:
-
-```
-credits_overview_data.txt
-```
-
----
-
-### 4️⃣ Run the Script
-
-```bash
-python credits_deduction.py
-```
-
-> 💡 Most tools can be added without changing any Python code.
-
----
-
-# 📈 Example Output
-
-## ✅ PASS
-
-```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Image to Text
-
-Credits Before : 150
-Credits After  : 149
-
-✓ PASS
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
----
-
-## ❌ FAIL
-
-```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-PDF to Excel
-
-Credits Before : 100
-Credits After  : 100
-
-✗ FAIL
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
----
-
-# 🛠 Troubleshooting
-
-| Problem | Solution |
-|----------|----------|
-| Browser won't connect | Restart Chrome with Remote Debugging |
-| Login expired | Login again using the debug browser |
-| Tool not detected | Update selectors in JSON |
-| Credits don't change | Verify Premium account |
-| Wrong deduction | Update expected credit values |
-| Browser closes | Keep Chrome open while testing |
-
----
-
-# 💡 Best Practices
-
-✅ Keep Chrome open while testing
-
-✅ Do not interact with the browser during execution
-
-✅ Update pricing whenever plans change
-
-✅ Prefer JSON configuration over modifying Python
-
-✅ Keep test files inside the Test Data folder
-
-✅ Commit configuration updates together with pricing changes
-
----
-
-# 🎉 That's It!
-
-Run one command:
-
-```bash
-python credits_deduction.py
-```
-
-The framework will automatically verify whether each tool deducts credits correctly and clearly report the result.
+- Selector overrides for some tools (e.g. grammarcheck.ai's text-input box) are
+  best-effort candidate lists rather than confirmed-exact selectors, and may need
+  tightening from a `debug_dumps/` dump on first run against a new site.
+- Exact-amount credit verification (vs. deduction-only) is currently only implemented
+  for sites that expose a documented per-tool credit rate.
 
 ---
 
 <div align="center">
 
-### Happy Testing! 🚀
-
-Made for the QA Team ❤️
+Personal QA tooling built and iterated against real staging/live sites as part of a
+broader automation portfolio. Not affiliated with or endorsed by the tested sites.
 
 </div>
