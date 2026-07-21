@@ -176,12 +176,34 @@ runs the script. You can add more than one tool in a row; it'll keep asking.
 
 | Problem | What to do |
 |---|---|
-| Browser won't connect / times out waiting for debugging port | The script retries once automatically. If it still fails, open Task Manager and close any lingering browser processes by hand, then re-run |
+| Browser won't connect / times out waiting for debugging port | The script auto-retries once (closes and relaunches). If it still fails, see **"Debugging port keeps timing out"** below — it's usually not random |
+| Edge specifically keeps failing even after retrying | Turn off Edge's **"Continue running background extensions and apps when Microsoft Edge is closed"** in `edge://settings/system`, then re-run. Edge can silently respawn itself in the background right after being closed, which steals the next launch before debugging gets enabled on it |
 | "Couldn't create the data directory" | Shouldn't happen — let the person who maintains this script know if it does |
 | A tool shows FAIL that you think should be PASS | Double-check you're logged into the **Premium** test account, not a free/limited one |
 | Script can't find a button/input on a tool's page | Check `debug_dumps/` for the screenshot+HTML it saved, then flag it — the selector likely needs updating |
 | Port 9222 already used by something else | Run `set QA_DEBUG_PORT=9333` before running the script |
 | You closed the browser by accident mid-run | Just re-run the script from scratch |
+
+## Debugging port keeps timing out (not just a one-off)
+
+If the port timeout happens **repeatedly** on a specific machine, even after the script's
+automatic retry, the real cause is usually **not** a firewall, antivirus, or a stray
+lingering process — it's the browser's own **single-instance lock**.
+
+**What's actually happening:** the script launches Chrome/Edge/Brave pointed at your *real*
+profile (on purpose — so it can reuse your already-logged-in session). If that browser's
+background process re-locks the profile between the kill and the relaunch, the new
+debug-enabled process gets silently handed off to the existing (non-debug) instance instead
+of starting fresh. A window may open, but debugging was never enabled on it — the port never
+binds, and the script just sees a timeout with no clearer error.
+
+**If closing all windows and retrying doesn't fix it on a specific machine:** the more
+bulletproof (but different-tradeoff) fix is to have that person's copy of the script use a
+**separate, isolated browser profile** just for automation, instead of their real one. This
+sidesteps the single-instance lock entirely — but means a one-time separate login in that
+isolated profile, since it won't have their everyday session already in it. If this is
+needed on a colleague's machine, flag it to whoever maintains the script rather than
+changing this yourself — it's a deliberate before/after tradeoff, not a simple setting.
 
 ---
 
