@@ -1,7 +1,7 @@
 {
   "ocr.best": {
-    "pricing_url": "https://www.ocr.best/pricing-plans",
-    "account_url": "https://www.ocr.best/account",
+    "pricing_url": "https://staging.ocr.best/pricing-plans",
+    "account_url": "https://staging.ocr.best/account",
     "quantityCheckSupported": true,
     "tools": [
       {
@@ -592,8 +592,8 @@
     ]
   },
   "editpad.org": {
-    "pricing_url": "https://staging.editpad.org/tool/plans",
-    "account_url": "https://staging.editpad.org/tool/account#plan",
+    "pricing_url": "https://www.editpad.org/tool/plans",
+    "account_url": "https://www.editpad.org/tool/account#plan",
     "quantityCheckSupported": false,
     "tools": [
       {
@@ -719,19 +719,6 @@
           "file_input": "input#file",
           "submit_btn": "button#submitBtn",
           "result_indicator": ""
-        },
-        "skip": false
-      },
-      {
-        "name": "jpg-to-word",
-        "url": "https://staging.editpad.org/tool/jpg-to-word",
-        "is_premium": true,
-        "cost": 1,
-        "file_type": "image",
-        "selectors": {
-          "file_input": "<span class=\"mybtn\" onclick=\"activupload()\" id=\"uploadBtn\">",
-          "submit_btn": "<img src=\"https://staging.editpad.org/web_assets/frontend/images/new-icon/upload-icon-itt.svg\" alt=\"Upload Icon\">",
-          "result_indicator": "<span class=\"before\">Upload File</span>"
         },
         "skip": false
       }

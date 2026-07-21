@@ -312,7 +312,12 @@ if sys.platform.startswith("win"):
 
 # Path Configurations
 MAPPINGS_FILE = "site_mappings.json"
-TEST_DATA_DIR = r"C:\Users\Enzipe\Desktop\Test Data"
+# Resolved relative to THIS SCRIPT's own location (not the current working directory, and
+# definitely not a hardcoded "C:\Users\Enzipe\Desktop\..." path tied to one machine) — the
+# "Test Data" folder now lives inside the project directory alongside the script itself, so
+# this works for anyone who clones/downloads the whole project folder, on any machine, run
+# from anywhere, with zero setup.
+TEST_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Test Data")
 
 # Per-site account page paths (override the default /account)
 SITE_ACCOUNT_PATHS = {
@@ -594,27 +599,48 @@ RESULT_INDICATOR_OVERRIDES = {
     ("paraphrasing.io", "default"): ["#download_report", ".download-icon", "img[alt='download icon' i]", "img[alt='Download Report' i]"],
 }
 
-# Default browser path search list
+# Debugging port — centralized here instead of scattered as a literal 9222 throughout the
+# file, so it can be overridden (QA_DEBUG_PORT env var) if 9222 is ever taken by something
+# else on a given machine, without hunting down every reference.
+DEBUG_PORT = int(os.environ.get("QA_DEBUG_PORT", "9222"))
+
+def _local_appdata():
+    """Resolve the CURRENT machine's actual %LOCALAPPDATA%, never a hardcoded username."""
+    return os.environ.get("LOCALAPPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Local")
+
+def _roaming_appdata():
+    """Resolve the CURRENT machine's actual %APPDATA%, never a hardcoded username."""
+    return os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Roaming")
+
+# Default browser path search list.
+#
+# user_data paths are resolved dynamically from this machine's own environment variables at
+# import time — NOT hardcoded to any one person's Windows username. The previous hardcoded
+# "C:\Users\Enzipe\..." paths only ever worked on the one machine they were written on; on
+# anyone else's PC, Windows either can't find that path or (worse, and exactly what one
+# colleague hit) refuses to let this process create/write to ANOTHER user's AppData folder
+# at all, surfacing as "We couldn't create the data directory" straight from the browser
+# itself. Resolving via %LOCALAPPDATA%/%APPDATA% fixes this for every machine, permanently.
 BROWSER_CONFIGS = {
     "Brave": {
         "path": r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-        "user_data": r"C:\Users\Enzipe\AppData\Local\BraveSoftware\Brave-Browser\User Data",
-        "arg": "--remote-debugging-port=9222"
+        "user_data": os.path.join(_local_appdata(), "BraveSoftware", "Brave-Browser", "User Data"),
+        "arg": f"--remote-debugging-port={DEBUG_PORT}"
     },
     "Chrome": {
         "path": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        "user_data": r"C:\Users\Enzipe\AppData\Local\Google\Chrome\User Data",
-        "arg": "--remote-debugging-port=9222"
+        "user_data": os.path.join(_local_appdata(), "Google", "Chrome", "User Data"),
+        "arg": f"--remote-debugging-port={DEBUG_PORT}"
     },
     "Edge": {
         "path": r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        "user_data": r"C:\Users\Enzipe\AppData\Local\Microsoft\Edge\User Data",
-        "arg": "--remote-debugging-port=9222"
+        "user_data": os.path.join(_local_appdata(), "Microsoft", "Edge", "User Data"),
+        "arg": f"--remote-debugging-port={DEBUG_PORT}"
     },
     "Firefox": {
         "path": r"C:\Program Files\Mozilla Firefox\firefox.exe",
-        "user_data": r"C:\Users\Enzipe\AppData\Roaming\Mozilla\Firefox\Profiles",
-        "arg": "--remote-debugging-port=9222"
+        "user_data": os.path.join(_roaming_appdata(), "Mozilla", "Firefox", "Profiles"),
+        "arg": f"--remote-debugging-port={DEBUG_PORT}"
     }
 }
 
@@ -654,22 +680,59 @@ def is_browser_process_running(browser_name):
     except Exception:
         return False
 
-def close_browser(browser_name):
-    """Force close browser processes."""
+def close_browser(browser_name, wait_timeout_s=10):
+    """Force close browser processes AND wait for them to actually be gone before returning.
+    A fixed sleep(1.5) isn't reliable — on a slower machine, antivirus scan, or a browser with
+    many extensions/tabs, the process can still be tearing down well past 1.5s, and relaunching
+    into a profile that's still mid-teardown is exactly the kind of race that produces a
+    silently-broken debug instance (process starts, but never opens the debugging port).
+    Polls tasklist instead of guessing a fixed delay."""
     exe_name = f"{browser_name.lower()}.exe"
     if browser_name == "Edge":
         exe_name = "msedge.exe"
     print(f"Closing {browser_name} browser to release profile locks...")
     try:
         subprocess.run(["taskkill", "/F", "/IM", exe_name], capture_output=True, check=True)
-        time.sleep(1.5)
     except Exception as e:
         print(f"Could not automatically close browser: {e}")
+        return
 
-def ensure_browser_debugging(browser_name):
-    """Make sure browser is running with remote debugging enabled on port 9222."""
-    if is_port_in_use(9222):
-        print("Debugging port 9222 is active.")
+    deadline = time.time() + wait_timeout_s
+    while time.time() < deadline:
+        if not is_browser_process_running(browser_name):
+            time.sleep(0.5)  # small settle buffer even after the process list clears
+            return
+        time.sleep(0.3)
+    print(f"[WARN] {browser_name} processes may still be shutting down after {wait_timeout_s}s — proceeding anyway.")
+
+def clear_stale_singleton_locks(user_data_dir):
+    """Remove Chromium's SingletonLock/SingletonCookie/SingletonSocket files (and the
+    Default profile's LOCK file) from a previous session. These are supposed to be cleaned
+    up automatically on normal browser exit, but a force-killed process (which is exactly
+    what close_browser() just did) can leave them behind — and their mere presence can make
+    the next launch believe another instance already owns the profile, silently refusing to
+    open the requested debugging port instead of erroring visibly. Safe to delete: they're
+    pure lock markers, not user data."""
+    if not user_data_dir or not os.path.isdir(user_data_dir):
+        return
+    stale_paths = [
+        os.path.join(user_data_dir, "SingletonLock"),
+        os.path.join(user_data_dir, "SingletonCookie"),
+        os.path.join(user_data_dir, "SingletonSocket"),
+        os.path.join(user_data_dir, "Default", "LOCK"),
+        os.path.join(user_data_dir, "Default", "lockfile"),
+    ]
+    for p in stale_paths:
+        try:
+            if os.path.exists(p) or os.path.islink(p):
+                os.remove(p)
+        except Exception:
+            pass  # best-effort cleanup — a failure here shouldn't block the actual launch attempt
+
+def ensure_browser_debugging(browser_name, _retry=True):
+    """Make sure browser is running with remote debugging enabled on DEBUG_PORT."""
+    if is_port_in_use(DEBUG_PORT):
+        print(f"Debugging port {DEBUG_PORT} is active.")
         return True
 
     # Get browser settings
@@ -682,7 +745,7 @@ def ensure_browser_debugging(browser_name):
             cfg = {
                 "path": custom_path,
                 "user_data": cfg["user_data"] if cfg else "",
-                "arg": "--remote-debugging-port=9222"
+                "arg": f"--remote-debugging-port={DEBUG_PORT}"
             }
         else:
             print("Invalid browser path. Aborting.")
@@ -700,6 +763,21 @@ def ensure_browser_debugging(browser_name):
         input("Press Enter once you have closed the browser to proceed...")
         close_browser(browser_name)
 
+    # Make sure the profile directory actually exists and is writable BEFORE the browser ever
+    # tries to touch it — this is what actually fixes "We couldn't create the data directory"
+    # for good: if Python (running as the current user) can create it here, the browser will
+    # never hit that error either, since both are now resolving the SAME real, current-user path.
+    try:
+        os.makedirs(cfg["user_data"], exist_ok=True)
+    except Exception as e:
+        print(f"[ERROR] Could not create/access profile directory: {cfg['user_data']}")
+        print(f"        {e}")
+        print("        Check that you have write permission to this folder, then try again.")
+        return False
+
+    # Clear any stale lock files left behind by a previous force-kill before relaunching.
+    clear_stale_singleton_locks(cfg["user_data"])
+
     print(f"Launching {browser_name} with remote debugging enabled...")
     try:
         cmd = [
@@ -712,16 +790,33 @@ def ensure_browser_debugging(browser_name):
         ]
         # Start browser as background process
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        
-        # Wait for port 9222
-        print("Waiting for debugging port (9222) to open...")
+
+        # Wait for the debugging port
+        print(f"Waiting for debugging port ({DEBUG_PORT}) to open...")
         for _ in range(30):
-            if is_port_in_use(9222):
+            if is_port_in_use(DEBUG_PORT):
                 print("Debugging port is active.")
                 time.sleep(1.5)
                 return True
             time.sleep(0.5)
-        print("Timeout waiting for debugging port to open.")
+
+        print(f"Timeout waiting for debugging port ({DEBUG_PORT}) to open.")
+        if _retry:
+            # One automatic recovery attempt: the browser process may have started but never
+            # bound the port (a known symptom of stale locks/a still-tearing-down previous
+            # instance) — force-close whatever came up, clear locks again, and try exactly
+            # once more before giving up and asking the person to intervene manually.
+            print("Retrying once: force-closing and relaunching...")
+            close_browser(browser_name)
+            clear_stale_singleton_locks(cfg["user_data"])
+            return ensure_browser_debugging(browser_name, _retry=False)
+
+        print(f"The browser process may still be running but never opened port {DEBUG_PORT}.")
+        print(f"Profile directory in use: {cfg['user_data']}")
+        print("Try closing ALL browser windows/processes manually (check Task Manager for")
+        print("lingering entries — including any hidden background/updater processes), then")
+        print("re-run the script. If this keeps happening, another program (antivirus, a")
+        print(f"firewall, or something else already using port {DEBUG_PORT}) may be interfering.")
         return False
     except Exception as e:
         print(f"Failed to launch browser: {e}")
@@ -1434,6 +1529,73 @@ def get_staging_url(url, domain):
     rebuilt = parsed._replace(netloc=staging_netloc)
     return rebuilt.geturl()
 
+def prompt_new_tool_wizard(base_url, domain):
+    """Interactively collect a brand-new tool's config — name, URL, input method, submit
+    button, result indicator — copy-pasted once by hand from live DOM inspection. Returns a
+    dict in the exact same shape as a configured_tools entry, so it runs through the main
+    loop identically to any pricing-page-discovered tool (no code changes needed) and gets
+    cached in site_mappings.json, so it's already there on every future run of this site.
+    Returns None if the person cancels (blank tool name)."""
+    cprint(f"\n  --- Add a new tool for {domain} ---", C.CYAN, bold=True)
+    name = input("  Tool name: ").strip()
+    if not name:
+        cprint("  (No name entered — cancelled, not adding a tool.)", C.YELLOW)
+        return None
+
+    default_url = f"{base_url.rstrip('/')}/{name.lower().replace(' ', '-')}"
+    url = input(f"  Tool URL (relative path or full URL) [{default_url}]: ").strip() or default_url
+    if not url.startswith("http"):
+        # Allow a bare relative path like "/my-tool" or "my-tool" typed by hand
+        url = f"{base_url.rstrip('/')}/{url.lstrip('/')}"
+
+    print("  Input method:")
+    print("    1. File upload")
+    print("    2. Typed/pasted text")
+    input_method = input("  Choice (1-2) [1]: ").strip() or "1"
+
+    file_type = "text"
+    file_input_sel = "input[type='file']"
+    text_input_conf = None
+
+    if input_method == "2":
+        text_input_sel = input("  Text input selector (paste the exact element's id/class, e.g. #input_text): ").strip()
+        sample_text = input("  Sample text to type in [Enter for a generic default]: ").strip()
+        if not sample_text:
+            sample_text = ("This is a sample paragraph used by our QA automation script to test "
+                            "whether the credit deduction system is working correctly for this tool.")
+        no_submit = input("  Does typing/pasting alone trigger the result — NO submit button to click? (y/n) [n]: ").strip().lower() == "y"
+        text_input_conf = {"selector": text_input_sel, "text": sample_text}
+        if no_submit:
+            text_input_conf["no_submit_needed"] = True
+    else:
+        file_type = input("  File type (image/pdf/word/excel/ppt/text) [text]: ").strip() or "text"
+        file_input_sel = input("  File input selector [input[type='file']]: ").strip() or "input[type='file']"
+
+    submit_sel = ""
+    if not (text_input_conf and text_input_conf.get("no_submit_needed")):
+        submit_sel = input("  Submit/Convert button selector (paste the exact element's id/class): ").strip()
+
+    result_sel = input("  Result-indicator selector (an element that ONLY appears once the result is generated): ").strip()
+
+    new_tool = {
+        "name": name,
+        "url": url,
+        "is_premium": True,
+        "cost": 1,
+        "file_type": file_type,
+        "selectors": {
+            "file_input": file_input_sel,
+            "submit_btn": submit_sel,
+            "result_indicator": result_sel
+        },
+        "skip": False
+    }
+    if text_input_conf:
+        new_tool["text_input"] = text_input_conf
+
+    cprint(f"  ✓ '{name}' added — runs in this session and is now saved for every future run.", C.GREEN)
+    return new_tool
+
 # ==============================================================================
 # Core CLI Automation Execution Flow
 # ==============================================================================
@@ -1607,7 +1769,7 @@ def run_cli_flow():
     print("\nConnecting Playwright to the active browser...")
     with sync_playwright() as p:
         try:
-            browser = p.chromium.connect_over_cdp("http://127.0.0.1:9222")
+            browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{DEBUG_PORT}")
         except Exception as e:
             print(f"Failed to connect via CDP: {e}")
             sys.exit(1)
@@ -1747,12 +1909,37 @@ def run_cli_flow():
                 save_mappings(mappings)
 
             # Confirm extracted tools and URLs before running
-            cprint("\n  Tools to test:", C.CYAN, bold=True)
-            for idx, tool in enumerate(configured_tools):
-                skip_info = f" {C.YELLOW}[SKIP]{C.RESET}" if tool.get("skip") else ""
-                tool_url = get_staging_url(tool['url'], domain) if env == "staging" else tool['url']
-                cprint(f"    {idx + 1}. {tool['name']}: {C.DIM}{tool_url}{C.RESET}{skip_info}", C.WHITE)
-            
+            def print_tools_list():
+                cprint("\n  Tools to test:", C.CYAN, bold=True)
+                for idx, t in enumerate(configured_tools):
+                    skip_info = f" {C.YELLOW}[SKIP]{C.RESET}" if t.get("skip") else ""
+                    t_url = get_staging_url(t['url'], domain) if env == "staging" else t['url']
+                    cprint(f"    {idx + 1}. {t['name']}: {C.DIM}{t_url}{C.RESET}{skip_info}", C.WHITE)
+            print_tools_list()
+
+            # Offer to add a tool not already in this list — e.g. a new tool the site just
+            # launched that isn't on the pricing page yet, or one that was deliberately
+            # excluded above. Loops so more than one can be added in a row. Each addition is
+            # appended to configured_tools (runs in THIS session too) and saved to
+            # site_mappings.json immediately, so it's already there on every future run.
+            if not args.yes:
+                while True:
+                    add_choice = input(f"\n  Add a new tool for {domain}? (y/n) [n]: ").strip().lower()
+                    if add_choice != "y":
+                        break
+                    new_tool = prompt_new_tool_wizard(base_url, domain)
+                    if new_tool:
+                        configured_tools.append(new_tool)
+                        site_map = {
+                            "pricing_url": pricing_url,
+                            "account_url": account_url,
+                            "quantityCheckSupported": site_map.get("quantityCheckSupported", True) if isinstance(site_map, dict) else True,
+                            "tools": configured_tools
+                        }
+                        mappings[domain] = site_map
+                        save_mappings(mappings)
+                        print_tools_list()
+
             if not args.yes:
                 input(f"\n  {C.DIM}Press Enter to start running...{C.RESET}")
 
@@ -1853,7 +2040,7 @@ def run_cli_flow():
                     safe_goto(tool_tab, tool_url, label="tool page")
                     safe_wait_idle(tool_tab, label="Tool page")
                     
-                    text_input_override = TEXT_INPUT_OVERRIDES.get((domain, tool_name)) or TEXT_INPUT_OVERRIDES.get((domain, "default"))
+                    text_input_override = TEXT_INPUT_OVERRIDES.get((domain, tool_name)) or TEXT_INPUT_OVERRIDES.get((domain, "default")) or tool.get("text_input")
                     pre_action = tool.get("pre_action", [])
                     if isinstance(pre_action, str):  # backward-compat with old cached single-string format
                         pre_action = [s.strip() for s in pre_action.split(",") if s.strip()]
@@ -1942,6 +2129,17 @@ def run_cli_flow():
                         verbs = verbs + ["Extract"]
 
                         submit_candidates = []
+                        if submit_sel and submit_sel != "button#submitBtn":
+                            # A real, confirmed selector for THIS tool (either hand-entered via
+                            # the "add a new tool" wizard, or edited into site_mappings.json
+                            # directly) — trust it ahead of every guess below. Without this, a
+                            # brand-new tool on a domain with no SUBMIT_BTN_OVERRIDES entry would
+                            # fall straight to the generic verb-guessing / jsShadowRoot fallback
+                            # further down (which belongs to a different, unrelated site) before
+                            # ever trying the selector the user actually confirmed by hand.
+                            # "button#submitBtn" is excluded since it's just the wizard's
+                            # untouched placeholder default, not a real confirmed value.
+                            submit_candidates.append(submit_sel)
                         if domain == "jpgtotext.com":
                             # Confirmed via live DOM inspection: JPG to Text tools use
                             # id="extract-btn" ("Extract Now"), everything else on this site
@@ -1998,8 +2196,6 @@ def run_cli_flow():
                             "button#submitBtn", "button#convertBtn", "button#translateShadowBtn", "button.convertBtn",
                             "button[type='submit']", "input[type='submit']",
                         ]
-                        if submit_sel and submit_sel not in generic_fallbacks:
-                            generic_fallbacks.insert(0, submit_sel)
                         submit_candidates += generic_fallbacks
 
                         submit_btn, matched_btn_sel = find_clickable(tool_tab, submit_candidates, timeout_each_ms=3000, existence_ms=1500)
@@ -2018,12 +2214,20 @@ def run_cli_flow():
                     # Wait for conversion: smart polling for result elements
                     cprint(f"  │ Waiting for result...", C.DIM)
                     result_detected = False
+                    # A real, confirmed result-indicator selector for THIS specific tool (either
+                    # hand-entered via the "add a new tool" wizard, or edited into
+                    # site_mappings.json) — trusted ahead of everything else below.
+                    # ".result-box" is excluded since it's just the wizard's untouched
+                    # placeholder default, not a real confirmed value.
+                    tool_result_indicator = (tool.get("selectors", {}) or {}).get("result_indicator", "").strip()
+                    if tool_result_indicator == ".result-box":
+                        tool_result_indicator = ""
                     # High-confidence markers: real action buttons confirmed via live DOM
                     # inspection across all 9 tools on this site — these can only exist once a
                     # result actually exists (you can't "start over" from nothing), unlike a
                     # heading which can render as a loading placeholder the instant processing
                     # starts. These get a much shorter stability requirement below.
-                    HIGH_CONFIDENCE_SELECTORS = (RESULT_INDICATOR_OVERRIDES.get((domain, tool_name)) or RESULT_INDICATOR_OVERRIDES.get((domain, "default")) or []) + [
+                    HIGH_CONFIDENCE_SELECTORS = ([tool_result_indicator] if tool_result_indicator else []) + (RESULT_INDICATOR_OVERRIDES.get((domain, tool_name)) or RESULT_INDICATOR_OVERRIDES.get((domain, "default")) or []) + [
                         ".start-over-btn", "button.start-over", "#js-start-over", "#startAgain",  # "Start Over"/"Start Again" button
                         "text=Start Again", "text=Start Over", "text=Upload Another Image",  # redundant text fallback (jpgtotext.com's button shows "Upload Another Image" at desktop widths, "Start Over" only below the sm breakpoint)
                         ".js-reset-icon", ".reset-icon",                     # Image Translator's "Reset" control
