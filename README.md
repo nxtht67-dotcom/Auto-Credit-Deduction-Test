@@ -1,193 +1,194 @@
 <div align="center">
 
-# credit-deduction-qa
+# 🚀 Credit Deduction QA Automation
 
-**A Playwright-based QA automation tool that verifies whether SaaS tools correctly deduct credits/quota from a user's account when a conversion or generation action is run.**
+### Checks whether each tool on our sites correctly deducts credits when used — so you don't have to test it by hand.
 
-![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
-![Playwright](https://img.shields.io/badge/playwright-automation-45ba4b?logo=playwright&logoColor=white)
-![Status](https://img.shields.io/badge/status-active-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-Automation-2EAD33?logo=playwright&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 
 </div>
 
 ---
 
-Built to test a portfolio of **10 content/OCR/writing-tool websites** that share a common
-underlying billing backend, across staging and live environments — driven by a real
-logged-in browser session (via Chrome DevTools Protocol), not a mocked one.
+# 📚 Contents
 
-## 📋 Table of contents
-
-- [What it does](#-what-it-does)
-- [Why this isn't a simple script](#-why-this-isnt-a-simple-click-a-button-and-check-a-number-script)
-- [Architecture](#-architecture)
-- [Supported sites](#-supported-sites)
-- [Requirements](#-requirements)
-- [Usage](#-usage)
-- [Project structure](#-project-structure)
-- [Known limitations](#-known-limitations)
+- [First-time setup](#-first-time-setup-do-this-once)
+- [Running a test](#-running-a-test-do-this-every-time)
+- [Reading the results](#-reading-the-results)
+- [Adding a new tool](#-adding-a-new-tool)
+- [Troubleshooting](#-troubleshooting)
+- [Rules of thumb](#-rules-of-thumb)
 
 ---
 
-## 🎯 What it does
+# 🧰 First-time setup (do this once)
 
-For every tool on a site, the script:
+## 1. Install Python 3.12+
 
-| Step | Action |
-|---|---|
-| **1. Read** | Capture the account's current credit balance |
-| **2. Run** | Upload a test file (or type sample text, where the tool has no file input) and click the tool's convert/submit button |
-| **3. Wait** | Poll for a real completion signal — not a fixed timer |
-| **4. Verify** | Re-read the balance and compare |
+Skip this if you already have it. Check with:
+```bash
+python --version
+```
 
-Result: **✅ PASS** if the balance changed, **❌ FAIL** if it didn't — and on sites that expose
-an exact per-tool credit rate, it can additionally verify the *exact* amount deducted.
+## 2. Install Playwright
 
----
+```bash
+pip install playwright
+playwright install
+```
 
-## 🧩 Why this isn't a simple "click a button and check a number" script
+## 3. Clone/download this repo
 
-Every one of the 10 target sites renders its UI differently, and several behaviors that
-looked reliable on one site turned out to be wrong on another. The design reflects real
-failure modes hit while building it — not theoretical edge cases.
+Everything you need — test files, site configs, credit rate tables — is already inside the
+project folder. Nothing to move to your Desktop, nothing to point at a custom path.
 
-<details>
-<summary><b>No single "credit balance" format</b></summary>
-<br>
-
-Some sites show a `used / total` ratio in one element; others (e.g. a "Plan Details" table)
-split the same info across `Credits Allowed` / `Credits Used` columns; others show a plain
-`"<N> used"` string next to an `Unlimited` allowance that must be ignored. The balance reader
-tries several extraction strategies per site rather than assuming one layout.
-</details>
-
-<details>
-<summary><b>Multiple independent credit pools</b></summary>
-<br>
-
-Some accounts show more than one pool at once — e.g. a "Monthly" plan and a "Premium" plan
-simultaneously, or per-tool-category pools like "Plagiarism Checker" vs "AI Writing Tools".
-The script isolates and checks the *specific* pool a given tool actually draws from, instead
-of treating the whole page as one balance and getting confused when only one of several
-numbers moves.
-</details>
-
-<details>
-<summary><b>Convert buttons aren't consistently &lt;button&gt; elements</b></summary>
-<br>
-
-Some sites use a styled `<div>`/`<span>` with a click handler instead. Selector matching
-falls back through button → div/span → link → `[role=button]`, guarded so it never
-blind-clicks an ambiguous match (e.g. a site-wide nav link that happens to also say "Convert").
-</details>
-
-<details>
-<summary><b>"Reload the balance" isn't always a real reload</b></summary>
-<br>
-
-Navigating to the exact same account-page URL twice in a row can leave a single-page app
-showing stale, cached numbers until a real (cache-busted) navigation is forced.
-</details>
-
-<details>
-<summary><b>Some tools take typed/pasted text, not a file upload</b></summary>
-<br>
-
-A few tools have no upload control at all — sample text is typed into the relevant
-textarea/contenteditable element instead, sometimes with no submit button at all
-(auto-analyzes on input).
-</details>
-
-Each of these is handled through a small number of **general-purpose, config-driven
-mechanisms** rather than one-off hacks per site, so adding a new site or tool is mostly a
-matter of adding data, not new control flow.
+That's it. No browser setup, no config file editing — the script handles all of that itself
+when you run it.
 
 ---
 
-## 🏗️ Architecture
+# ▶️ Running a test (do this every time)
 
-| Concern | Mechanism |
-|---|---|
-| Finding a submit/convert control | `find_clickable()` — tries a prioritized candidate-selector list per (site, tool), skipping any match that's ambiguous (matches >1 element) rather than guessing |
-| Reading the credit balance | `get_credit_balance()` — generic whole-page extraction by default; `get_credit_balance_for_pool()` for sites with multiple/separately-labeled pools |
-| Per-tool selector/behavior overrides | Small lookup dicts keyed by `(domain, tool_name)` — `SUBMIT_BTN_OVERRIDES`, `RESULT_INDICATOR_OVERRIDES`, `TEXT_INPUT_OVERRIDES` — checked ahead of generic guessing, with a `"default"` fallback per site |
-| Detecting a finished conversion | Two-tier selector list: high-confidence markers (a real "Start Over"/download control, which can only exist once a result exists) checked first, weaker guessed markers as a fallback |
-| Stale/cached account pages | `cache_busted_url()` appends a changing query param so every balance check is a genuinely fresh navigation |
-| Adding a new tool | Interactive wizard (`prompt_new_tool_wizard()`) — paste the tool's selectors once, it's saved to `site_mappings.json` and already there next run |
-| Debuggability | `dump_debug_info()` saves a screenshot + relevant HTML snippet whenever a selector fails to match, so a fix can be written from real markup instead of guessing blind |
-
----
-
-## 🌐 Supported sites
-
-<table>
-<tr>
-<td>editpad.org</td><td>grammarcheck.ai</td><td>imagetotext.cc</td><td>imagetotext.info</td><td>imagetotext.io</td>
-</tr>
-<tr>
-<td>jpgtotext.com</td><td>ocr.best</td><td>paraphrasing.io</td><td>prepostseo.com</td><td>summarizer.org</td>
-</tr>
-</table>
-
-Per-site tool lists, resolved tool URLs, and per-tool credit rates are seeded from
-`credits_overview_data.txt` / `resolved_tool_urls.json` and cached to `site_mappings.json`
-on first run.
-
----
-
-## ⚙️ Requirements
-
-- Python 3.12
-- Playwright for Python
-  ```bash
-  pip install playwright
-  playwright install
-  ```
-- A Chromium-based browser (Brave/Chrome/Edge) — the script launches it with
-  `--remote-debugging-port=9222` if it isn't already running that way, so it can attach to
-  your real logged-in session rather than a blank automated profile
-
----
-
-## ▶️ Usage
+## Step 1 — Run the script
 
 ```bash
 python credits_deduction.py
 ```
 
-You'll be prompted to pick an environment (Staging/Live), then a site (or "Run All Sites").
-The script opens an account tab and a tool tab, and walks through each of that site's tools —
-with the option to add a new tool interactively before the run starts.
-
----
-
-## 📁 Project structure
+## Step 2 — Answer the prompts
 
 ```
-credits_deduction.py        # main script
-site_mappings.json           # cached per-site tool list + resolved URLs (auto-generated/merged)
-credits_overview_data.txt    # seed: per-site tool → credit rate
-resolved_tool_urls.json      # seed: per-site tool → confirmed URL path
-Test Data/                   # sample upload files, organized by type (image/, pdf/, word/, txt/, ...)
-debug_dumps/                 # auto-saved screenshots + HTML snippets on selector failures
+Select environment to test:
+  1. Staging
+  2. Live
+```
+Pick **Staging** unless you're specifically told to test Live.
+
+```
+Select a website to test:
+  1. editpad.org
+  2. grammarcheck.ai
+  ...
+  11. Run All Sites
+  12. Enter a custom site URL
+```
+Pick the site you're testing, or `11` to run everything.
+
+```
+Detected default browser: Chrome
+Use Chrome? (Press Enter, or type Chrome/Brave/Edge/Firefox):
+```
+Press **Enter** to accept the detected browser, or type a different one if you'd rather use
+Brave/Edge/Firefox.
+
+## Step 3 — If your browser is already open
+
+You'll see:
+```
+RESTART REQUIRED: CHROME IS RUNNING
+```
+**Save any unsaved work in your browser first.** Then just press Enter — the script closes
+your browser and reopens it itself with the right settings. Your tabs come back
+automatically if you have session-restore turned on. You don't need to do anything else.
+
+## Step 4 — First time only: log in
+
+A browser window opens. If you're not already logged into the Premium test account on the
+site being tested, **log in now**, then leave the window open. The script picks up your
+session from there. On future runs you won't need to log in again (same browser profile is
+reused).
+
+## Step 5 — Let it run
+
+```
+Tools to test:
+    1. Plagiarism Checker: https://staging.editpad.org/tool/plagiarism-checker
+    2. Paraphrasing Tool: https://staging.editpad.org/tool/paraphrasing-tool
+    ...
+
+Add a new tool for editpad.org? (y/n) [n]:
+```
+Press **Enter**/type `n` unless you're specifically adding a new tool (see [below](#-adding-a-new-tool)).
+
+```
+Press Enter to start running...
+```
+Press Enter, then **leave the browser alone** — don't click anything, switch tabs, or close
+the window while it's running. It'll go tool by tool on its own.
+
+---
+
+# 📊 Reading the results
+
+Each tool prints a block like this:
+
+```
+┌─ [1/9] Plagiarism Checker
+  │ Credits before: 25000 Credits Used 42
+  │ Navigating → https://staging.editpad.org/tool/plagiarism-checker
+  │ Uploading: credits test.txt
+  │ Conversion done ✓ (5.5s)
+  │ Credits after:  25000 Credits Used 45
+  └─ ✓ PASS Credit changed (42 used → 45 used)
 ```
 
+- **✓ PASS** — credits changed after using the tool. Working as expected.
+- **✗ FAIL** — credits did *not* change. This is a real finding — flag it, don't ignore it.
+- **⚠ WARN** — something looked off (slow page load, retry needed) but the script kept going.
+  Not necessarily a bug, just worth a glance if the final result also looks wrong.
+
+At the end of a full run, you'll get a summary per site — how many tools passed/failed, and
+a list of exactly which ones failed so you don't have to scroll back through the whole log.
+
+If something fails unexpectedly (not a real credit bug, but the script itself couldn't find
+a button/input), check the `debug_dumps/` folder — it auto-saves a screenshot + the page's
+HTML at the moment it got stuck, which is the fastest way to see what actually went wrong.
+
 ---
 
-## ⚠️ Known limitations
+# ➕ Adding a new tool
 
-- Selector overrides for some tools (e.g. grammarcheck.ai's text-input box) are
-  best-effort candidate lists rather than confirmed-exact selectors, and may need
-  tightening from a `debug_dumps/` dump on first run against a new site.
-- Exact-amount credit verification (vs. deduction-only) is currently only implemented
-  for sites that expose a documented per-tool credit rate.
+You don't need to touch any code for this — the script asks you interactively.
+
+When it prints the tool list, right before "Press Enter to start running," it'll ask:
+```
+Add a new tool for editpad.org? (y/n) [n]:
+```
+Type `y` and it walks you through:
+
+1. **Tool name**
+2. **Tool URL**
+3. **Input method** — does it take a file upload, or do you paste/type text into a box?
+4. **Submit button** — open the tool in your browser, right-click the convert/submit
+   button → **Inspect**, and paste the element it shows you
+5. **Result indicator** — same idea, but for something that only appears *after* a result is
+   generated (a download icon, a "Start Over" button, etc.) — this is how the script knows
+   the conversion actually finished
+
+It's saved immediately — runs in that same session, and it's already there next time anyone
+runs the script. You can add more than one tool in a row; it'll keep asking.
 
 ---
 
-<div align="center">
+# 🛠 Troubleshooting
 
-Personal QA tooling built and iterated against real staging/live sites as part of a
-broader automation portfolio. Not affiliated with or endorsed by the tested sites.
+| Problem | What to do |
+|---|---|
+| Browser won't connect / times out waiting for debugging port | The script retries once automatically. If it still fails, open Task Manager and close any lingering browser processes by hand, then re-run |
+| "Couldn't create the data directory" | Shouldn't happen — let the person who maintains this script know if it does |
+| A tool shows FAIL that you think should be PASS | Double-check you're logged into the **Premium** test account, not a free/limited one |
+| Script can't find a button/input on a tool's page | Check `debug_dumps/` for the screenshot+HTML it saved, then flag it — the selector likely needs updating |
+| Port 9222 already used by something else | Run `set QA_DEBUG_PORT=9333` before running the script |
+| You closed the browser by accident mid-run | Just re-run the script from scratch |
 
-</div>
+---
+
+# ✅ Rules of thumb
+
+- Always pick **Staging** unless told otherwise.
+- Don't touch the browser once a run has started.
+- A **FAIL** is a real result to report, not an error to dismiss.
+- Prefer the **in-script wizard** over hand-editing JSON files when adding a tool.
+- If in doubt, check `debug_dumps/` before asking — it usually shows exactly what the script saw.
