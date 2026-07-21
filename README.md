@@ -2,362 +2,193 @@
 
 # 🚀 Credit Deduction QA Automation
 
-### Automated Playwright framework for validating premium credit deduction across multiple SaaS tools.
+### Checks whether each tool on our sites correctly deducts credits when used — so you don't have to test it by hand.
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-Automation-2EAD33?logo=playwright&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
-![QA](https://img.shields.io/badge/Purpose-QA%20Automation-blue)
 
 </div>
 
 ---
 
-# 📚 Table of Contents
+# 📚 Contents
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Project Structure](#-project-structure)
-- [Requirements](#-requirements)
-- [Quick Start](#-quick-start)
-- [How It Works](#-how-it-works)
-- [Configuration Files](#-configuration-files)
-- [Adding a New Tool](#-adding-a-new-tool)
-- [Example Output](#-example-output)
+- [First-time setup](#-first-time-setup-do-this-once)
+- [Running a test](#-running-a-test-do-this-every-time)
+- [Reading the results](#-reading-the-results)
+- [Adding a new tool](#-adding-a-new-tool)
 - [Troubleshooting](#-troubleshooting)
-- [Best Practices](#-best-practices)
+- [Rules of thumb](#-rules-of-thumb)
 
 ---
 
-# 🎯 Overview
+# 🧰 First-time setup (do this once)
 
-This project automates **credit deduction verification** for premium SaaS tools.
+## 1. Install Python 3.12+
 
-Instead of manually checking credits after every conversion, the script automatically:
-
-- Reads the user's current credits
-- Performs the conversion
-- Waits until processing completes
-- Reads credits again
-- Reports whether the expected deduction occurred
-
-Supported tools include:
-
-- 🖼️ Image to Text
-- 📄 PDF Tools
-- 🌍 OCR Tools
-- 🤖 AI Writing Tools
-- ✨ Paraphrasing
-- 📝 Grammar Tools
-- and many more...
-
----
-
-# ✨ Features
-
-| Feature | Description |
-|----------|-------------|
-| ✅ Automatic Credit Verification | Checks credits before and after every test |
-| 🌐 Multi-site Support | Test multiple websites from one framework |
-| ⚙️ Configuration Driven | Add tools without changing Python code |
-| 📂 Multiple File Types | Images, PDFs, DOCX, PPTX, Text |
-| 📊 Quantity Validation | Verifies exact deduction where supported |
-| 🎨 Colorized Output | Easy-to-read PASS / FAIL console logs |
-| 🔍 Smart Waiting | Waits for real completion instead of fixed delays |
-
----
-
-# 📁 Project Structure
-
-```text
-.
-├── credits_deduction.py          ⭐ Main Script
-├── credits_deduction_save.py     Backup Version
-├── resolved_tool_urls.json       Tool Configuration
-├── site_mappings.json            Website Mapping
-├── credits_overview_data.txt     Expected Credit Costs
-├── debug_dumps/                  Screenshots & HTML on failures
-└── README.md
+Skip this if you already have it. Check with:
+```bash
+python --version
 ```
 
----
-
-# ⚙️ Requirements
-
-## Software
-
-- Python **3.11+**
-- Google Chrome
-- Playwright
-
----
-
-## Install Dependencies
+## 2. Install Playwright
 
 ```bash
 pip install playwright
-```
-
-```bash
 playwright install
 ```
 
----
+## 3. Clone/download this repo
 
-# 🚀 Quick Start
+Everything you need — test files, site configs, credit rate tables — is already inside the
+project folder. Nothing to move to your Desktop, nothing to point at a custom path.
 
-## Step 1 — Launch Chrome
-
-Close every Chrome window first.
-
-```cmd
-chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\ChromeAutomation"
-```
+That's it. No browser setup, no config file editing — the script handles all of that itself
+when you run it.
 
 ---
 
-## Step 2 — Login
+# ▶️ Running a test (do this every time)
 
-Using the opened browser:
-
-✅ Login to Premium Account
-
-✅ Keep Chrome open
-
-❌ Do NOT close it
-
----
-
-## Step 3 — Configure Test Data
-
-Inside **credits_deduction.py**
-
-```python
-TEST_DATA_DIR = r"C:\Users\<YourName>\Desktop\Test Data"
-```
-
-Example folder:
-
-```text
-Test Data
-│
-├── sample.jpg
-├── sample.pdf
-├── sample.docx
-├── sample.pptx
-└── sample.txt
-```
-
----
-
-## Step 4 — Run
+## Step 1 — Run the script
 
 ```bash
 python credits_deduction.py
 ```
 
----
+## Step 2 — Answer the prompts
 
-# 🔄 How It Works
-
-```text
-┌────────────────────┐
-│ Read Current Credit│
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Open Target Tool   │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Upload/Test Input  │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Run Conversion     │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Wait for Result    │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Read Credits Again │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│ Compare Values     │
-└─────────┬──────────┘
-          │
-      PASS / FAIL
 ```
+Select environment to test:
+  1. Staging
+  2. Live
+```
+Pick **Staging** unless you're specifically told to test Live.
 
----
+```
+Select a website to test:
+  1. editpad.org
+  2. grammarcheck.ai
+  ...
+  11. Run All Sites
+  12. Enter a custom site URL
+```
+Pick the site you're testing, or `11` to run everything.
 
-# 🗂 Configuration Files
+```
+Detected default browser: Chrome
+Use Chrome? (Press Enter, or type Chrome/Brave/Edge/Firefox):
+```
+Press **Enter** to accept the detected browser, or type a different one if you'd rather use
+Brave/Edge/Firefox.
 
-## 📄 resolved_tool_urls.json
+## Step 3 — If your browser is already open
 
-Contains:
+You'll see:
+```
+RESTART REQUIRED: CHROME IS RUNNING
+```
+**Save any unsaved work in your browser first.** Then just press Enter — the script closes
+your browser and reopens it itself with the right settings. Your tabs come back
+automatically if you have session-restore turned on. You don't need to do anything else.
 
-- Tool URLs
-- Expected credit cost
-- File type
-- Selectors
-- Premium flag
-- Pre-actions
-- Skip rules
+## Step 4 — First time only: log in
 
----
+A browser window opens. If you're not already logged into the Premium test account on the
+site being tested, **log in now**, then leave the window open. The script picks up your
+session from there. On future runs you won't need to log in again (same browser profile is
+reused).
 
-## 🌐 site_mappings.json
+## Step 5 — Let it run
 
-Contains:
+```
+Tools to test:
+    1. Plagiarism Checker: https://staging.editpad.org/tool/plagiarism-checker
+    2. Paraphrasing Tool: https://staging.editpad.org/tool/paraphrasing-tool
+    ...
 
-- Base URLs
-- Pricing Pages
-- Tool Paths
-- Website Notes
+Add a new tool for editpad.org? (y/n) [n]:
+```
+Press **Enter**/type `n` unless you're specifically adding a new tool (see [below](#-adding-a-new-tool)).
+
+```
+Press Enter to start running...
+```
+Press Enter, then **leave the browser alone** — don't click anything, switch tabs, or close
+the window while it's running. It'll go tool by tool on its own.
 
 ---
 
-## 💳 credits_overview_data.txt
+# 📊 Reading the results
 
-Reference list of expected premium credit costs.
+Each tool prints a block like this:
 
-Update whenever pricing changes.
+```
+┌─ [1/9] Plagiarism Checker
+  │ Credits before: 25000 Credits Used 42
+  │ Navigating → https://staging.editpad.org/tool/plagiarism-checker
+  │ Uploading: credits test.txt
+  │ Conversion done ✓ (5.5s)
+  │ Credits after:  25000 Credits Used 45
+  └─ ✓ PASS Credit changed (42 used → 45 used)
+```
+
+- **✓ PASS** — credits changed after using the tool. Working as expected.
+- **✗ FAIL** — credits did *not* change. This is a real finding — flag it, don't ignore it.
+- **⚠ WARN** — something looked off (slow page load, retry needed) but the script kept going.
+  Not necessarily a bug, just worth a glance if the final result also looks wrong.
+
+At the end of a full run, you'll get a summary per site — how many tools passed/failed, and
+a list of exactly which ones failed so you don't have to scroll back through the whole log.
+
+If something fails unexpectedly (not a real credit bug, but the script itself couldn't find
+a button/input), check the `debug_dumps/` folder — it auto-saves a screenshot + the page's
+HTML at the moment it got stuck, which is the fastest way to see what actually went wrong.
 
 ---
 
-# ➕ Adding a New Tool
+# ➕ Adding a new tool
 
-### 1️⃣ Add Tool Information
+You don't need to touch any code for this — the script asks you interactively.
 
-Update:
-
+When it prints the tool list, right before "Press Enter to start running," it'll ask:
 ```
-resolved_tool_urls.json
+Add a new tool for editpad.org? (y/n) [n]:
 ```
+Type `y` and it walks you through:
 
----
+1. **Tool name**
+2. **Tool URL**
+3. **Input method** — does it take a file upload, or do you paste/type text into a box?
+4. **Submit button** — open the tool in your browser, right-click the convert/submit
+   button → **Inspect**, and paste the element it shows you
+5. **Result indicator** — same idea, but for something that only appears *after* a result is
+   generated (a download icon, a "Start Over" button, etc.) — this is how the script knows
+   the conversion actually finished
 
-### 2️⃣ Add Site Mapping
-
-Update:
-
-```
-site_mappings.json
-```
-
----
-
-### 3️⃣ Update Credit Cost
-
-Update:
-
-```
-credits_overview_data.txt
-```
-
----
-
-### 4️⃣ Run the Script
-
-```bash
-python credits_deduction.py
-```
-
-> 💡 Most tools can be added without changing any Python code.
-
----
-
-# 📈 Example Output
-
-## ✅ PASS
-
-```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Image to Text
-
-Credits Before : 150
-Credits After  : 149
-
-✓ PASS
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
----
-
-## ❌ FAIL
-
-```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-PDF to Excel
-
-Credits Before : 100
-Credits After  : 100
-
-✗ FAIL
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+It's saved immediately — runs in that same session, and it's already there next time anyone
+runs the script. You can add more than one tool in a row; it'll keep asking.
 
 ---
 
 # 🛠 Troubleshooting
 
-| Problem | Solution |
-|----------|----------|
-| Browser won't connect | Restart Chrome with Remote Debugging |
-| Login expired | Login again using the debug browser |
-| Tool not detected | Update selectors in JSON |
-| Credits don't change | Verify Premium account |
-| Wrong deduction | Update expected credit values |
-| Browser closes | Keep Chrome open while testing |
+| Problem | What to do |
+|---|---|
+| Browser won't connect / times out waiting for debugging port | The script retries once automatically. If it still fails, open Task Manager and close any lingering browser processes by hand, then re-run |
+| "Couldn't create the data directory" | Shouldn't happen — let the person who maintains this script know if it does |
+| A tool shows FAIL that you think should be PASS | Double-check you're logged into the **Premium** test account, not a free/limited one |
+| Script can't find a button/input on a tool's page | Check `debug_dumps/` for the screenshot+HTML it saved, then flag it — the selector likely needs updating |
+| Port 9222 already used by something else | Run `set QA_DEBUG_PORT=9333` before running the script |
+| You closed the browser by accident mid-run | Just re-run the script from scratch |
 
 ---
 
-# 💡 Best Practices
+# ✅ Rules of thumb
 
-✅ Keep Chrome open while testing
-
-✅ Do not interact with the browser during execution
-
-✅ Update pricing whenever plans change
-
-✅ Prefer JSON configuration over modifying Python
-
-✅ Keep test files inside the Test Data folder
-
-✅ Commit configuration updates together with pricing changes
-
----
-
-# 🎉 That's It!
-
-Run one command:
-
-```bash
-python credits_deduction.py
-```
-
-The framework will automatically verify whether each tool deducts credits correctly and clearly report the result.
-
----
-
-<div align="center">
-
-### Happy Testing! 🚀
-
-Made for the QA Team ❤️
-
-</div>
+- Always pick **Staging** unless told otherwise.
+- Don't touch the browser once a run has started.
+- A **FAIL** is a real result to report, not an error to dismiss.
+- Prefer the **in-script wizard** over hand-editing JSON files when adding a tool.
+- If in doubt, check `debug_dumps/` before asking — it usually shows exactly what the script saw.
