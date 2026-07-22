@@ -4,6 +4,7 @@ import json
 import time
 import socket
 import subprocess
+import shutil
 import re
 from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
@@ -599,10 +600,31 @@ RESULT_INDICATOR_OVERRIDES = {
     ("paraphrasing.io", "default"): ["#download_report", ".download-icon", "img[alt='download icon' i]", "img[alt='Download Report' i]"],
 }
 
-# Debugging port — centralized here instead of scattered as a literal 9222 throughout the
-# file, so it can be overridden (QA_DEBUG_PORT env var) if 9222 is ever taken by something
-# else on a given machine, without hunting down every reference.
-DEBUG_PORT = int(os.environ.get("QA_DEBUG_PORT", "9222"))
+# ==============================================================================
+# Portable Browser Detection & Debug Port Management
+# ==============================================================================
+#
+# ROOT CAUSE (confirmed independently on two colleagues' machines):
+# Launching the browser with --remote-debugging-port pointed at the REAL user
+# profile (e.g. %LOCALAPPDATA%\Google\Chrome\User Data) can trigger Chromium's
+# single-instance mechanism: if any process still owns that profile (even one
+# mid-teardown from a moment ago), the new debug-flagged launch gets silently
+# handed off to the EXISTING instance — which was never started with the debug
+# flag. A window may still appear, but the debug port never binds, and the
+# script just sees a timeout with no clearer signal of why.
+#
+# THE FIX: launch into a completely separate, script-owned profile directory
+# (%LOCALAPPDATA%\CreditQADebugProfile\<Browser>) instead of the real one. A
+# different --user-data-dir means the browser treats it as a brand-new,
+# independent instance — the single-instance check never fires, so the debug
+# port reliably binds every time. The user's real browsing profile/session is
+# never touched or closed.
+#
+# Trade-off worth knowing: since this profile starts empty, each person needs
+# to log into the Premium test account ONCE inside it — same as they would in
+# any fresh browser profile. After that first login, the profile persists
+# exactly like a normal one across every future run.
+# ==============================================================================
 
 def _local_appdata():
     """Resolve the CURRENT machine's actual %LOCALAPPDATA%, never a hardcoded username."""
@@ -612,37 +634,133 @@ def _roaming_appdata():
     """Resolve the CURRENT machine's actual %APPDATA%, never a hardcoded username."""
     return os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Roaming")
 
-# Default browser path search list.
-#
-# user_data paths are resolved dynamically from this machine's own environment variables at
-# import time — NOT hardcoded to any one person's Windows username. The previous hardcoded
-# "C:\Users\Enzipe\..." paths only ever worked on the one machine they were written on; on
-# anyone else's PC, Windows either can't find that path or (worse, and exactly what one
-# colleague hit) refuses to let this process create/write to ANOTHER user's AppData folder
-# at all, surfacing as "We couldn't create the data directory" straight from the browser
-# itself. Resolving via %LOCALAPPDATA%/%APPDATA% fixes this for every machine, permanently.
+def _programfiles():
+    return os.environ.get("PROGRAMFILES", r"C:\Program Files")
+
+def _programfiles_x86():
+    return os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
+
+def _find_browser_exe_from_registry(reg_key_path, value_name=""):
+    """Read a browser exe path from the Windows registry's App Paths key — the most
+    reliable source across custom install locations and drive letters, since Windows
+    itself relies on this to launch the browser via 'start chrome.exe' etc. Checks both
+    HKLM (system-wide install) and HKCU (per-user install, no admin rights needed).
+    Returns None on any failure rather than raising — this is a best-effort lookup with
+    several fallback candidate paths tried afterward."""
+    try:
+        import winreg
+    except ImportError:
+        return None
+    for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+        try:
+            with winreg.OpenKey(hive, reg_key_path) as key:
+                val, _ = winreg.QueryValueEx(key, value_name)
+                val = val.strip().strip('"').split('"')[0]
+                if os.path.isfile(val):
+                    return val
+        except Exception:
+            continue
+    return None
+
+def _find_exe_from_candidates(candidates):
+    """Return the first path in the list that actually exists on this machine."""
+    for p in candidates:
+        if p and os.path.isfile(p):
+            return p
+    return None
+
+def _resolve_chrome_exe():
+    reg = _find_browser_exe_from_registry(r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe")
+    if reg:
+        return reg
+    local, pf, pf86 = _local_appdata(), _programfiles(), _programfiles_x86()
+    return _find_exe_from_candidates([
+        os.path.join(pf, "Google", "Chrome", "Application", "chrome.exe"),
+        os.path.join(pf86, "Google", "Chrome", "Application", "chrome.exe"),
+        os.path.join(local, "Google", "Chrome", "Application", "chrome.exe"),  # per-user install, no admin rights
+    ])
+
+def _resolve_brave_exe():
+    reg = _find_browser_exe_from_registry(r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\brave.exe")
+    if reg:
+        return reg
+    local, pf, pf86 = _local_appdata(), _programfiles(), _programfiles_x86()
+    return _find_exe_from_candidates([
+        os.path.join(pf, "BraveSoftware", "Brave-Browser", "Application", "brave.exe"),
+        os.path.join(pf86, "BraveSoftware", "Brave-Browser", "Application", "brave.exe"),
+        os.path.join(local, "BraveSoftware", "Brave-Browser", "Application", "brave.exe"),
+    ])
+
+def _resolve_edge_exe():
+    reg = _find_browser_exe_from_registry(r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe")
+    if reg:
+        return reg
+    pf, pf86 = _programfiles(), _programfiles_x86()
+    return _find_exe_from_candidates([
+        os.path.join(pf86, "Microsoft", "Edge", "Application", "msedge.exe"),
+        os.path.join(pf, "Microsoft", "Edge", "Application", "msedge.exe"),
+    ])
+
+def _resolve_firefox_exe():
+    reg = _find_browser_exe_from_registry(r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\firefox.exe")
+    if reg:
+        return reg
+    pf, pf86 = _programfiles(), _programfiles_x86()
+    return _find_exe_from_candidates([
+        os.path.join(pf, "Mozilla Firefox", "firefox.exe"),
+        os.path.join(pf86, "Mozilla Firefox", "firefox.exe"),
+    ])
+
+# Resolved once at import time. None means not found on this machine — the launcher
+# will prompt for a manual path in that case, same as before.
+_CHROME_EXE = _resolve_chrome_exe()
+_BRAVE_EXE = _resolve_brave_exe()
+_EDGE_EXE = _resolve_edge_exe()
+_FIREFOX_EXE = _resolve_firefox_exe()
+
+# Isolated, script-owned profile directory — see the module docstring above for why this
+# replaced pointing at the user's real browser profile.
+_DEBUG_PROFILE_BASE = os.path.join(_local_appdata(), "CreditQADebugProfile")
+
 BROWSER_CONFIGS = {
     "Brave": {
-        "path": r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-        "user_data": os.path.join(_local_appdata(), "BraveSoftware", "Brave-Browser", "User Data"),
-        "arg": f"--remote-debugging-port={DEBUG_PORT}"
+        "path": _BRAVE_EXE or os.path.join(_programfiles(), "BraveSoftware", "Brave-Browser", "Application", "brave.exe"),
+        "user_data": os.path.join(_DEBUG_PROFILE_BASE, "Brave"),
     },
     "Chrome": {
-        "path": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        "user_data": os.path.join(_local_appdata(), "Google", "Chrome", "User Data"),
-        "arg": f"--remote-debugging-port={DEBUG_PORT}"
+        "path": _CHROME_EXE or os.path.join(_programfiles(), "Google", "Chrome", "Application", "chrome.exe"),
+        "user_data": os.path.join(_DEBUG_PROFILE_BASE, "Chrome"),
     },
     "Edge": {
-        "path": r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        "user_data": os.path.join(_local_appdata(), "Microsoft", "Edge", "User Data"),
-        "arg": f"--remote-debugging-port={DEBUG_PORT}"
+        "path": _EDGE_EXE or os.path.join(_programfiles_x86(), "Microsoft", "Edge", "Application", "msedge.exe"),
+        "user_data": os.path.join(_DEBUG_PROFILE_BASE, "Edge"),
     },
     "Firefox": {
-        "path": r"C:\Program Files\Mozilla Firefox\firefox.exe",
-        "user_data": os.path.join(_roaming_appdata(), "Mozilla", "Firefox", "Profiles"),
-        "arg": f"--remote-debugging-port={DEBUG_PORT}"
-    }
+        "path": _FIREFOX_EXE or os.path.join(_programfiles(), "Mozilla Firefox", "firefox.exe"),
+        "user_data": os.path.join(_DEBUG_PROFILE_BASE, "Firefox"),
+    },
 }
+
+def _find_free_port(preferred, search_range=30):
+    """Scan [preferred, preferred + search_range] and return the first port not currently
+    bound. Only used as a last-resort fallback (see ensure_browser_debugging) when the
+    preferred port is occupied by something we couldn't close — e.g. an unrelated tool, not
+    a leftover browser instance. Falls back to returning `preferred` unchanged if the whole
+    range is somehow taken, letting the actual browser launch surface the real error."""
+    for port in range(preferred, preferred + search_range):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            if s.connect_ex(("127.0.0.1", port)) != 0:
+                return port
+    return preferred
+
+# Debugging port — centralized here instead of scattered as a literal 9222 throughout the
+# file. QA_DEBUG_PORT env var always wins outright if set (e.g. two people running this on
+# the same machine at once: QA_DEBUG_PORT=9223 for one of them). Otherwise defaults to 9222;
+# ensure_browser_debugging() will fall forward to the next free port automatically if 9222
+# turns out to be occupied by something it can't close, updating this value for the rest of
+# the run (including the later Playwright CDP connection).
+DEBUG_PORT = int(os.environ.get("QA_DEBUG_PORT", "9222"))
 
 def get_default_browser_name():
     """Detect default browser using Windows Registry UserChoice."""
@@ -665,15 +783,15 @@ def get_default_browser_name():
     return "Chrome"  # Fallback to Chrome
 
 def is_port_in_use(port):
-    """Check if a local port is already open."""
+    """Check if a local port is already open. 1s timeout prevents an indefinite hang if a
+    firewall silently drops the connection attempt instead of actively refusing it."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(1)
         return s.connect_ex(('127.0.0.1', port)) == 0
 
 def is_browser_process_running(browser_name):
     """Check if the browser executable is running."""
-    exe_name = f"{browser_name.lower()}.exe"
-    if browser_name == "Edge":
-        exe_name = "msedge.exe"
+    exe_name = get_exe_name_for_browser(browser_name)
     try:
         res = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {exe_name}"], capture_output=True, text=True, check=True)
         return exe_name in res.stdout
@@ -681,27 +799,21 @@ def is_browser_process_running(browser_name):
         return False
 
 def close_browser(browser_name, wait_timeout_s=10):
-    """Force close browser processes AND wait for them to actually be gone before returning.
-    A fixed sleep(1.5) isn't reliable — on a slower machine, antivirus scan, or a browser with
-    many extensions/tabs, the process can still be tearing down well past 1.5s, and relaunching
-    into a profile that's still mid-teardown is exactly the kind of race that produces a
-    silently-broken debug instance (process starts, but never opens the debugging port).
-    Polls tasklist instead of guessing a fixed delay.
+    """Force close ALL processes matching this browser's name and wait for them to actually
+    be gone before returning. NOT currently called anywhere in the isolated-debug-profile
+    flow above — killing by process name can't distinguish "our isolated instance" from the
+    person's regular browser window, so ensure_browser_debugging() deliberately avoids it
+    (its retry path kills by exact PID instead). Kept as a utility function in case a future
+    need for a broader force-close arises (e.g. a manual `--reset` flag).
 
     Edge specifically has a "Startup boost" setting (edge://settings/system → "Continue
     running background extensions and apps when Microsoft Edge is closed") that can respawn
-    a background msedge.exe almost immediately after it's killed. If that respawned instance
-    is running WITHOUT the debugging flag and grabs the profile's singleton lock first, the
-    next launch (even with --remote-debugging-port set) gets silently handed off to it via
-    Chromium's single-instance mechanism instead of actually starting fresh — a window may
-    still appear, but debugging was never enabled on it. Sweeping multiple times, and also
-    killing Edge's background helper processes, catches this instead of just killing once
-    and assuming it's gone."""
+    a background msedge.exe almost immediately after it's killed — sweeping repeatedly for a
+    few seconds, and also killing Edge's background helper processes, catches this instead of
+    a single kill-and-hope, if this function is ever wired back in."""
     exe_name = get_exe_name_for_browser(browser_name)
     helper_processes = []
     if browser_name == "Edge":
-        # Background helpers that can keep a profile lock alive even after msedge.exe itself
-        # is killed once — msedgewebview2.exe in particular is what Startup Boost keeps alive.
         helper_processes = ["msedgewebview2.exe", "identity_helper.exe"]
 
     print(f"Closing {browser_name} browser to release profile locks...")
@@ -719,9 +831,6 @@ def close_browser(browser_name, wait_timeout_s=10):
         print(f"Could not automatically close browser: {e}")
         return
 
-    # Repeat-sweep for a couple seconds to catch an instant respawn (Edge's Startup Boost)
-    # rather than a single kill-and-hope — if it respawns between our kill and the next
-    # launch attempt, that respawned instance silently steals the debug launch.
     sweep_deadline = time.time() + 3
     while time.time() < sweep_deadline:
         if is_browser_process_running(browser_name):
@@ -731,19 +840,15 @@ def close_browser(browser_name, wait_timeout_s=10):
     deadline = time.time() + wait_timeout_s
     while time.time() < deadline:
         if not is_browser_process_running(browser_name):
-            time.sleep(0.5)  # small settle buffer even after the process list clears
+            time.sleep(0.5)
             return
         time.sleep(0.3)
     print(f"[WARN] {browser_name} processes may still be shutting down after {wait_timeout_s}s — proceeding anyway.")
 
 def clear_stale_singleton_locks(user_data_dir):
     """Remove Chromium's SingletonLock/SingletonCookie/SingletonSocket files (and the
-    Default profile's LOCK file) from a previous session. These are supposed to be cleaned
-    up automatically on normal browser exit, but a force-killed process (which is exactly
-    what close_browser() just did) can leave them behind — and their mere presence can make
-    the next launch believe another instance already owns the profile, silently refusing to
-    open the requested debugging port instead of erroring visibly. Safe to delete: they're
-    pure lock markers, not user data."""
+    Default profile's LOCK file) left behind by a force-killed process. Safe to delete:
+    they're pure lock markers, not user data."""
     if not user_data_dir or not os.path.isdir(user_data_dir):
         return
     stale_paths = [
@@ -758,7 +863,7 @@ def clear_stale_singleton_locks(user_data_dir):
             if os.path.exists(p) or os.path.islink(p):
                 os.remove(p)
         except Exception:
-            pass  # best-effort cleanup — a failure here shouldn't block the actual launch attempt
+            pass
 
 def get_exe_name_for_browser(browser_name):
     """Map a browser choice ('Chrome'/'Brave'/'Edge'/'Firefox') to its actual process name."""
@@ -791,88 +896,94 @@ def get_process_holding_port(port):
     return None
 
 def ensure_browser_debugging(browser_name, _retry=True):
-    """Make sure browser is running with remote debugging enabled on DEBUG_PORT."""
+    """Make sure the browser is running with remote debugging enabled on DEBUG_PORT, using
+    an isolated script-owned profile (see the module docstring above for why).
+
+    Self-healing behavior:
+    - Detects if a DIFFERENT browser is already holding the port and closes it.
+    - Uses the isolated debug profile — never the user's real profile — so the person's
+      everyday browser is never asked to close.
+    - On timeout, wipes the ENTIRE isolated profile directory (not just lock files, since
+      it's safe to nuke a profile that's ours alone) and retries once automatically.
+    - Captures browser stderr so a real launch error is visible instead of a bare timeout.
+    - If the port is still unavailable after closing a mismatched holder, falls forward to
+      the next free port automatically rather than failing outright.
+    """
+    global DEBUG_PORT
     expected_exe = get_exe_name_for_browser(browser_name)
 
     if is_port_in_use(DEBUG_PORT):
         holder_exe = get_process_holding_port(DEBUG_PORT)
         if holder_exe is None or holder_exe == expected_exe:
-            # Either it's genuinely the requested browser, or we couldn't identify the holder
-            # at all (in which case assume it's fine rather than force-closing something we
-            # can't confirm — safer to proceed than to kill an unrelated process by mistake).
             print(f"Debugging port {DEBUG_PORT} is active.")
             return True
         else:
-            # A DIFFERENT browser (e.g. Brave left running from an earlier session) is
-            # holding the port than the one just requested (e.g. Edge) — close it and fall
-            # through to actually launch the requested browser below, instead of silently
-            # reusing whatever happened to already be open.
             print(f"Port {DEBUG_PORT} is currently held by {holder_exe}, not {expected_exe} — closing it so {browser_name} can be used instead.")
             try:
-                subprocess.run(["taskkill", "/F", "/IM", holder_exe], capture_output=True, check=True)
+                subprocess.run(["taskkill", "/F", "/IM", holder_exe], capture_output=True, check=False)
             except Exception as e:
                 print(f"[WARN] Could not close {holder_exe}: {e}")
             deadline = time.time() + 10
             while time.time() < deadline and is_port_in_use(DEBUG_PORT):
                 time.sleep(0.3)
+            if is_port_in_use(DEBUG_PORT):
+                # Something we couldn't close is still squatting on this port (e.g. an
+                # unrelated dev tool, not a leftover browser) — fall forward to the next
+                # free port instead of failing outright.
+                new_port = _find_free_port(DEBUG_PORT + 1)
+                print(f"Port {DEBUG_PORT} still occupied — using {new_port} instead for this run.")
+                DEBUG_PORT = new_port
 
     # Get browser settings
     cfg = BROWSER_CONFIGS.get(browser_name)
-    if not cfg or not os.path.exists(cfg["path"]):
+    if not cfg or not os.path.isfile(cfg["path"]):
         print(f"[ERROR] Browser executable not found at: {cfg.get('path') if cfg else 'Unknown'}")
         print("Please enter the custom path to your browser executable: ")
         custom_path = input("> ").strip().strip('"')
-        if os.path.exists(custom_path):
-            cfg = {
-                "path": custom_path,
-                "user_data": cfg["user_data"] if cfg else "",
-                "arg": f"--remote-debugging-port={DEBUG_PORT}"
-            }
+        if os.path.isfile(custom_path):
+            cfg = dict(cfg) if cfg else {"user_data": os.path.join(_DEBUG_PROFILE_BASE, browser_name)}
+            cfg["path"] = custom_path
+            BROWSER_CONFIGS[browser_name] = cfg
         else:
             print("Invalid browser path. Aborting.")
             sys.exit(1)
 
-    if is_browser_process_running(browser_name):
-        print("\n" + "="*80)
-        print(f"RESTART REQUIRED: {browser_name.upper()} IS RUNNING")
-        print("="*80)
-        print("To control the browser and use your active logged-in Google session,")
-        print(f"the script needs to restart {browser_name} with remote debugging enabled.")
-        print("\nPlease save any unsaved work in the browser, then close all browser windows.")
-        print("Once started by the script, your tabs will restore automatically if configured.")
-        print("="*80)
-        input("Press Enter once you have closed the browser to proceed...")
-        close_browser(browser_name)
+    # Nothing to close here: the isolated debug profile is a separate --user-data-dir, and
+    # browsers happily run multiple simultaneous instances with different profiles side by
+    # side — so the person's regular, everyday browser window is never touched and never
+    # needs to close. (Deliberately not force-closing anything by process name in this
+    # normal path — taskkill by name can't distinguish "our isolated instance" from "the
+    # person's regular browser with real unsaved work"; it would kill both. The retry path
+    # below kills only the exact PID of the specific launch attempt that failed, for the
+    # same reason.)
 
-    # Make sure the profile directory actually exists and is writable BEFORE the browser ever
-    # tries to touch it — this is what actually fixes "We couldn't create the data directory"
-    # for good: if Python (running as the current user) can create it here, the browser will
-    # never hit that error either, since both are now resolving the SAME real, current-user path.
+    debug_profile_dir = cfg["user_data"]
     try:
-        os.makedirs(cfg["user_data"], exist_ok=True)
+        os.makedirs(debug_profile_dir, exist_ok=True)
     except Exception as e:
-        print(f"[ERROR] Could not create/access profile directory: {cfg['user_data']}")
+        print(f"[ERROR] Could not create/access debug profile directory: {debug_profile_dir}")
         print(f"        {e}")
         print("        Check that you have write permission to this folder, then try again.")
         return False
 
-    # Clear any stale lock files left behind by a previous force-kill before relaunching.
-    clear_stale_singleton_locks(cfg["user_data"])
+    clear_stale_singleton_locks(debug_profile_dir)
 
-    print(f"Launching {browser_name} with remote debugging enabled...")
+    print(f"Launching {browser_name} with remote debugging on port {DEBUG_PORT}...")
+    print(f"  Debug profile: {debug_profile_dir}")
     try:
         cmd = [
             cfg["path"],
-            cfg["arg"],
-            f"--user-data-dir={cfg['user_data']}",
-            "--profile-directory=Default",
+            f"--remote-debugging-port={DEBUG_PORT}",
+            f"--user-data-dir={debug_profile_dir}",
             "--no-first-run",
-            "--new-window"
+            "--no-default-browser-check",
+            "--disable-background-mode",
+            "--disable-extensions",
         ]
-        # Start browser as background process
-        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Capture stderr so any real browser startup error is visible on failure instead of
+        # silently swallowed behind a bare "timeout" message.
+        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
-        # Wait for the debugging port
         print(f"Waiting for debugging port ({DEBUG_PORT}) to open...")
         for _ in range(30):
             if is_port_in_use(DEBUG_PORT):
@@ -881,29 +992,47 @@ def ensure_browser_debugging(browser_name, _retry=True):
                 return True
             time.sleep(0.5)
 
+        try:
+            stderr_output = proc.stderr.read(4096).decode("utf-8", errors="replace").strip()
+        except Exception:
+            stderr_output = ""
+
         print(f"Timeout waiting for debugging port ({DEBUG_PORT}) to open.")
+        if stderr_output:
+            print(f"[Browser stderr]\n{stderr_output}")
+
         if _retry:
-            # One automatic recovery attempt: the browser process may have started but never
-            # bound the port (a known symptom of stale locks/a still-tearing-down previous
-            # instance) — force-close whatever came up, clear locks again, and try exactly
-            # once more before giving up and asking the person to intervene manually.
-            print("Retrying once: force-closing and relaunching...")
-            close_browser(browser_name)
-            clear_stale_singleton_locks(cfg["user_data"])
+            # One automatic recovery attempt: kill the SPECIFIC process we just launched (by
+            # PID, not by process name — taskkill by name would also catch the person's
+            # regular, everyday browser window if one happens to be open, which has nothing
+            # to do with this failed isolated-profile launch), wipe the isolated debug
+            # profile entirely, and relaunch from a completely clean slate.
+            print("Retrying once: closing this attempt and relaunching...")
+            try:
+                subprocess.run(["taskkill", "/F", "/PID", str(proc.pid)], capture_output=True, check=False)
+            except Exception:
+                pass
+            try:
+                if os.path.isdir(debug_profile_dir):
+                    shutil.rmtree(debug_profile_dir, ignore_errors=True)
+                    print(f"Debug profile wiped: {debug_profile_dir}")
+            except Exception as wipe_err:
+                print(f"[WARN] Could not wipe debug profile: {wipe_err}")
             return ensure_browser_debugging(browser_name, _retry=False)
 
         print(f"The browser process may still be running but never opened port {DEBUG_PORT}.")
-        print(f"Profile directory in use: {cfg['user_data']}")
+        print(f"Debug profile directory: {debug_profile_dir}")
         if browser_name == "Edge":
             print("Edge specifically has a 'Startup boost' setting that can silently relaunch")
             print("a background copy of itself right after being closed, which then steals the")
             print("next launch before debugging ever gets enabled on it. Try turning this off:")
             print("  edge://settings/system -> 'Continue running background extensions and")
             print("  apps when Microsoft Edge is closed' -> OFF, then re-run the script.")
-        print("Try closing ALL browser windows/processes manually (check Task Manager for")
-        print("lingering entries — including any hidden background/updater processes), then")
-        print("re-run the script. If this keeps happening, another program (antivirus, a")
-        print(f"firewall, or something else already using port {DEBUG_PORT}) may be interfering.")
+        print("Diagnostics:")
+        print(f"  Check what's on this port:  netstat -ano | findstr :{DEBUG_PORT}")
+        print(f"  Try a different port:       set QA_DEBUG_PORT=9333")
+        print("If this keeps happening, check Task Manager for any lingering browser")
+        print(f"processes (including hidden background/updater processes) and end them.")
         return False
     except Exception as e:
         print(f"Failed to launch browser: {e}")

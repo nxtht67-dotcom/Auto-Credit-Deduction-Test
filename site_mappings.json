@@ -123,8 +123,8 @@
     ]
   },
   "imagetotext.cc": {
-    "pricing_url": "https://www.imagetotext.cc/pricing",
-    "account_url": "https://www.imagetotext.cc/profile",
+    "pricing_url": "https://staging.imagetotext.cc/pricing",
+    "account_url": "https://staging.imagetotext.cc/profile",
     "quantityCheckSupported": true,
     "tools": [
       {
@@ -592,8 +592,8 @@
     ]
   },
   "editpad.org": {
-    "pricing_url": "https://www.editpad.org/tool/plans",
-    "account_url": "https://www.editpad.org/tool/account#plan",
+    "pricing_url": "https://staging.editpad.org/tool/plans",
+    "account_url": "https://staging.editpad.org/tool/account#plan",
     "quantityCheckSupported": false,
     "tools": [
       {
@@ -802,8 +802,8 @@
     ]
   },
   "grammarcheck.ai": {
-    "pricing_url": "https://www.grammarcheck.ai/pricing",
-    "account_url": "https://www.grammarcheck.ai/profile",
+    "pricing_url": "https://staging.grammarcheck.ai/pricing",
+    "account_url": "https://staging.grammarcheck.ai/profile",
     "quantityCheckSupported": true,
     "tools": [
       {
